@@ -20,7 +20,8 @@ module.exports = function(grunt){
 
     jshint: {
       options: {
-        ignores: ['node_modules/**/*', 'public/lib/**/*']
+        ignores: ['node_modules/**/*', 'public/lib/**/*'],
+        laxbreak: true
       },
 
       beforeConcat: ['**/*.js'],

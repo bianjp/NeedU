@@ -32,6 +32,10 @@ if (app.get('env') === 'development') {
       error: err
     });
   });
+
+  app.get('/test', function(req, res){
+    res.render('test');
+  });
 }
 
 // production error handler
@@ -60,9 +64,17 @@ db.getConnection(function(db) {
 
   /// catch 404 and forward to error handler
   app.use(function(req, res, next) {
-    var err = new Error('Not Found');
-    err.status = 404;
-    next(err);
+    if (req.path.indexOf('api') != -1){
+      res.send({
+        status: 404,
+        message: 'Not Founded'
+      });
+    }
+    else{
+      var err = new Error('Not Found');
+      err.status = 404;
+      next(err);
+    }
   });
 
   var debug = require('debug')('diandian-express');
