@@ -45,8 +45,8 @@ exports.initialize = function(callback){
         createdAt: new Date(),
         role: 'admin',
         password: {
-          indetity: '',
-          salt: ''
+          indetity: '6000a683c6d7442f8209ded2f2e52d7b376e3d58',
+          salt: '1811b194ae23a1f39bd0'
         }
       }, function(err){
         if (err){
