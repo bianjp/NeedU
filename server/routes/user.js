@@ -109,6 +109,7 @@ router.post('/user', function(req, res){
       delete user.concernedBy;
       delete user.concerns;
       res.send({
+        status: 0,
         sid: sid,
         user: user
       });
@@ -138,9 +139,21 @@ router.post('/user/authentication', function(req, res){
         delete item.password;
         delete item.concernedBy;
         delete item.concerns;
-        res.send({
-          status: 0,
-          user: item
+        var user = item;
+        createSession(req.db, user._id, function(err, sid){
+          if (err){
+            res.send({
+              status: 3,
+              message: '登录失败'
+            });
+          }
+          else {
+            res.send({
+              status: 0,
+              sid: sid,
+              user: user
+            });
+          }
         });
       }
   });
