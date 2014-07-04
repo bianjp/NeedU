@@ -1,9 +1,10 @@
 var express = require('express');
 var router = express.Router();
+var async = require('async');
+var ObjectID = require('mongodb').ObjectID;
 
 // check sessions
 router.use(function(req, res, next){
-  res.set('Access-Control-Allow-Origin', '*');
   res.type('json'); //set Content-Type to json
 
   if (!req.query.sid){
@@ -11,8 +12,16 @@ router.use(function(req, res, next){
     next();
   }
   else {
-    req.db.collection('sessions', function(err, col){
-      col.find(req.query.sid, function(err, item){
+    async.waterfall([
+      function(callback){
+        req.db.collection('sessions', callback);
+      },
+
+      function(col, callback){
+        // must convert string to ObjectID
+        col.findOne(ObjectID(req.query.sid), callback);
+      }
+    ], function(err, item){
         if (err || !item){
           delete req.session;
         }
@@ -20,10 +29,8 @@ router.use(function(req, res, next){
           req.session = item;
         }
         next();
-      });
     });
   }
-  
 });
 
 router.use(function(req, res, next){

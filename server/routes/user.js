@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var crypto = require('crypto');
+var ObjectID = require('mongodb').ObjectID;
 
 var generateSalt = function(){
   return crypto.randomBytes(10).toString('hex');
@@ -167,7 +168,7 @@ router.get('/user/:userId', function(req, res){
     },
 
     function(col, callback){
-      col.findOne({userId: req.params.userId}, callback);
+      col.findOne({_id: ObjectID(req.params.userId)}, callback);
     }
   ], function(err, item){
       if (err){
@@ -213,7 +214,7 @@ router.put('/user', function(req, res){
     },
 
     function(col, callback){
-      col.update(req.session.userId, {
+      col.update({_id: req.session.userId}, {
         $set:{
           profile: profile
         }
@@ -265,7 +266,8 @@ router.put('/user/password', function(req, res){
     },
 
     function(col, callback){
-      col.update(req.session.userId, {
+      // update(userId, ...) would cause error
+      col.update({_id: req.session.userId}, {
         $set: {
           password: generatePassword(req.body.password)
         }
