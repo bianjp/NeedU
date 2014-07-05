@@ -22,7 +22,8 @@
 			QQ: string,
 			description: string	//个人描述
 		},
-		concernedBy: [ObjectId]	//关注者
+		concernedBy: [ObjectId]	//关注者	有动态时方便通知
+		concerns: [ObjectId]	//关注的
 	}
 
 */

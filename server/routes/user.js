@@ -168,7 +168,7 @@ router.get('/user/:userId', function(req, res){
     },
 
     function(col, callback){
-      col.findOne({_id: ObjectID(req.params.userId)}, callback);
+      col.findOne(ObjectID(req.params.userId), callback);
     }
   ], function(err, item){
       if (err){

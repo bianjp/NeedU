@@ -53,5 +53,6 @@ router.use(function(req, res, next){
 
 
 router.use('/', require('./user'));
+router.use('/', require('./concerns'));
 
 module.exports = router;
