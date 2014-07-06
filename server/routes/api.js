@@ -54,5 +54,6 @@ router.use(function(req, res, next){
 
 router.use('/', require('./user'));
 router.use('/', require('./concerns'));
+router.use('/', require('./helps'));
 
 module.exports = router;

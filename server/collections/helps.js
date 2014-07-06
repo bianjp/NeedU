@@ -10,7 +10,7 @@
 		tags: [string],			//标签
 		up: [ObjectId],			//顶
 		down: [ObjectId],		//踩
-		comments: [ObjectId]
+		commentCount: int
 	}
 
 */
