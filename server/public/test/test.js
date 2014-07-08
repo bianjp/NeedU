@@ -7,7 +7,7 @@ $(function(){
 		var method = $('#method').val();
 		var url = $('#url').val();
 		var sid = $('#sid').val();
-		var body = $('#body').val();
+		var body = $('#body').val().trim();
 
 		url = '/api' + url;
 
@@ -25,7 +25,23 @@ $(function(){
 				return null;
 			}
 
-			return body.replace(/[ \n]+/, '&');
+			var items = body.split(/[ \n]+/);
+			var pair;
+			var data = {};
+			for (var i = 0; i < items.length; i++){
+				pair = items[i].split('=');
+				if (!data[pair[0]]){
+					data[pair[0]] = pair[1];
+				}
+				else if (data[pair[0]] instanceof Array){
+					data[pair[0]].push(pair[1]);
+				}
+				else{
+					data[pair[0]] = [data[pair[0]]];
+					data[pair[0]].push(pair[1]);
+				}
+			}
+			return data;
 		};
 
 
@@ -34,7 +50,7 @@ $(function(){
 		$.ajax({
 			url: url,
 			type: method,
-			data: method == 'GET' ? null : getRequestBody(),
+			data: getRequestBody(),
 			dataType: 'text',
 			error: function(jqXHR, textStatus, errorThrown){
 				$('#result textarea').val('请求失败: ' + textStatus);
