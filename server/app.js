@@ -17,8 +17,7 @@ app.use(favicon());
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
-app.use(cookieParser(config.cookieSecret));
-app.use(session());
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 /// error handlers
@@ -32,6 +31,10 @@ if (app.get('env') === 'development') {
       message: err.message,
       error: err
     });
+  });
+
+  app.get('/test', function(req, res){
+    res.render('test');
   });
 }
 
@@ -52,13 +55,26 @@ db.getConnection(function(db) {
     next();
   });
 
-  // app.use('/', require('./routes/index'));
+  app.use('/admin', cookieParser(config.cookieSecret));
+  app.use('/admin', session());
+
+  // routes
+  app.use('/admin', require('./routes/admin'));
+  app.use('/api', require('./routes/api'));
 
   /// catch 404 and forward to error handler
   app.use(function(req, res, next) {
-    var err = new Error('Not Found');
-    err.status = 404;
-    next(err);
+    if (req.path.indexOf('api') != -1){
+      res.send({
+        status: 404,
+        message: 'Not Founded'
+      });
+    }
+    else{
+      var err = new Error('Not Found');
+      err.status = 404;
+      next(err);
+    }
   });
 
   var debug = require('debug')('diandian-express');

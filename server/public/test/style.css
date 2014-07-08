@@ -1,0 +1,30 @@
+.field {
+	line-height: 2;
+}
+
+.field span{
+	display: inline-block;
+	width: 100px;
+}
+
+.field input {
+	width: 500px;
+}
+
+.field textarea {
+	width: 500px;
+	vertical-align: middle;
+}
+
+.operations{
+	margin: 20px 0;
+}
+
+.operations button:first-child {
+	margin-left: 100px;
+}
+
+#result textarea {
+	width: 60%;
+	height: 300px;
+}

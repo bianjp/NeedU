@@ -20,7 +20,8 @@ module.exports = function(grunt){
 
     jshint: {
       options: {
-        ignores: ['node_modules/**/*', 'public/lib/**/*']
+        ignores: ['node_modules/**/*', 'public/lib/**/*'],
+        laxbreak: true
       },
 
       beforeConcat: ['**/*.js'],
@@ -87,7 +88,7 @@ module.exports = function(grunt){
   grunt.loadNpmTasks('grunt-express-server');
 
   // 自定义任务
-  grunt.registerTask('default', ['clean', 'less', 'jshint:beforeConcat', 'concat', 'jshint:afterConcat', 'express', 'watch']);
+  // grunt.registerTask('default', ['clean', 'less', 'jshint:beforeConcat', 'concat', 'jshint:afterConcat', 'express', 'watch']);
   grunt.registerTask('default', ['jshint:beforeConcat', 'express', 'watch']);
   
   grunt.registerTask('clearDatabase', 'Clear database...', function(){
