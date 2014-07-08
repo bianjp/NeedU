@@ -45,11 +45,60 @@ var createSession = function(db, userId, callback){
   });
 };
 
+var validateProfile = function(profile, isUpdating){
+  var requiredFields = {
+    'school': '学校',
+    'major': '专业',
+    'schoolYear': '入学年份',
+    'name': '名称',
+    'gender': '性别'
+  };
+
+  var key;
+  if (isUpdating){  //update profile
+    for (key in requiredFields){
+      if (profile[key] !== undefined && !profile[key]){
+        return requiredFields[key] + '不能为空';
+      }
+    }
+  }
+  else {
+    for (key in requiredFields){
+      if (!profile[key]){
+        return requiredFields[key] + '不能为空';
+      }
+    }
+  }
+  return false;
+};
+
+var validateUsername = function(username){
+  if (!username){
+    return '学号不能为空';
+  }
+  else if (!/^[a-zA-Z\d]+$/.test(username)){
+    return '学号错误';
+  }
+  return false;
+};
+
+var validatePassword = function(password){
+  if (password.length < 6){
+    return '密码不能少于6位';
+  }
+  return false;
+};
 
 //sign up
 router.post('/user', function(req, res){
-
-  // validate
+  var error = validateUsername(req.body.username) || validatePassword(req.body.password);
+  if (error){
+    res.send({
+      status: 1,
+      message: error
+    });
+    return;
+  }
 
   var user = {
     username: req.body.username,
@@ -71,6 +120,15 @@ router.post('/user', function(req, res){
     concernedBy: [],
     concerns: []
   };
+
+  error = validateProfile(user.profile);
+  if (error){
+    res.send({
+      status: 1,
+      message: error
+    });
+    return;
+  }
 
   async.waterfall([
     function(callback){
@@ -189,24 +247,30 @@ router.get('/user/:userId', function(req, res){
   });
 });
 
+
+var getUpdatedProfile = function(body){
+  var update = {};
+  var fields = ['school', 'major', 'schoolYear', 'name', 'gender', 'birthday', 'phone', 'wechat', 'QQ', 'description'];
+  for (var i = 0; i < fields.length; i++){
+    if (body[fields[i]] !== undefined){
+      update['profile.' + fields[i]] = body[fields[i]];
+    }
+  }
+  return update;
+};
+
 //update profile
 router.put('/user', function(req, res){
+  var error = validateProfile(req.body);
+  if (error){
+    res.send({
+      status: 1,
+      message: error
+    });
+    return;
+  }
 
-  // validate
-
-  var profile = {
-    school: req.body.school || null,
-    major: req.body.major || null,
-    schoolYear: req.body.schoolYear || null,
-    name: req.body.name || null,
-    gender: req.body.gender,
-    photo: req.body.photo || null,
-    birthday: req.body.birthday || null,
-    phone: req.body.phone || null,
-    wechat: req.body.wechat || null,
-    QQ: req.body.QQ || null,
-    description: req.body.description || null,
-  };
+  var update = getUpdatedProfile(req.body, true);
 
   async.waterfall([
     function(callback){
@@ -215,9 +279,7 @@ router.put('/user', function(req, res){
 
     function(col, callback){
       col.update({_id: req.session.userId}, {
-        $set:{
-          profile: profile
-        }
+        $set: update
       }, callback);
     }
   ], function(err, result){
@@ -242,6 +304,14 @@ router.put('/user/photo', function(req, res){
 
 //update password
 router.put('/user/password', function(req, res){
+  var error = validatePassword(req.body.password);
+  if (error){
+    res.send({
+      status: 1,
+      message: error
+    });
+  }
+
   var collection;
   async.waterfall([
     function(callback){
