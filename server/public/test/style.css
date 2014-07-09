@@ -1,19 +1,51 @@
-.field {
+body {
+	margin: 0 20px;
+	padding: 0;
+}
+
+#fields > div {
 	line-height: 2;
 }
 
-.field span{
+#fields > div span{
 	display: inline-block;
-	width: 100px;
+	width: 60px;
 }
 
-.field input {
-	width: 500px;
+#fields > div input {
+	width: 400px;
 }
 
-.field textarea {
-	width: 500px;
+#fields > div textarea {
+	width: 400px;
 	vertical-align: middle;
+}
+
+#fields > div #note{
+	width: auto;
+}
+
+#apis {
+	position: absolute;
+	width: 300px;
+	left: 650px;
+	top: 0px;
+	border: 1px solid black;
+}
+
+#apis h2 {
+	margin: 10px 20px;
+}
+
+#apis > ul {
+	overflow: auto;
+	max-height: 250px;
+}
+
+#apis > ul > li{
+	color: blue;
+	text-decoration: underline;
+	cursor: pointer;
 }
 
 .operations{
