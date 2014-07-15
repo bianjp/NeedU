@@ -22,7 +22,7 @@ router.post('/comment/help/:helpId', function(req, res){
     helpId: helpId,
     commentId: null,
     content: req.body.content,
-    secret: parseInt(req.body.secret),
+    secret: !!parseInt(req.body.secret),
     thanked: false
   };
   if (req.body.commentId){
@@ -95,7 +95,7 @@ router.delete('/comment/:commentId', function(req, res){
     }
     else if (numberOfRemovedDocs === 0){
       res.send({
-        status: 4,
+        status: 2,
         message: '请求删除的信息不存在'
       });
     }
@@ -135,13 +135,13 @@ router.post('/comment/:commentId/thanks', function(req, res){
     function(item, callback){
       if (!item){
         res.send({
-          status: 4,
+          status: 2,
           message: '请求操作的对象不存在'
         });
       }
       else if (item.thanked){
         res.send({
-          status: 1,
+          status: 5,
           message: '已感谢'
         });
       }
