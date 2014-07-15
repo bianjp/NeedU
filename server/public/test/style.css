@@ -44,8 +44,15 @@ body {
 
 #apis > ul > li{
 	color: blue;
-	text-decoration: underline;
 	cursor: pointer;
+}
+
+#apis > ul > li.separator {
+	list-style: none;
+	height: 1px;
+	border-bottom: 1px solid black;
+	margin: 3px 0 3px -15px;
+	width: 60%;
 }
 
 .operations{

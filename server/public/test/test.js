@@ -4,85 +4,103 @@ $(function(){
 	});
 
 	var apis = {
-		'signup': {
+		signup: {
 			method: 'POST',
 			url: '/user',
 			body: 'username=\npassword=\nschool=\nmajor=\nschoolYear=\nname=\ngender=\nbirthday=\nphone=\nwechat=\nQQ=\ndescription='
 		},
-		'signin': {
+		signin: {
 			method: 'POST',
 			url: '/user/authentication',
 			body: 'username=\npassword='
 		},
-		'updatePassword': {
+		updatePassword: {
 			method: 'PUT',
 			url: '/user/password',
 			body: 'oldPassword=\npassword='
 		},
-		'updatePhoto': {
+		updatePhoto: {
 			method: 'PUT',
 			url: '/user/photo',
 			body: ''
 		},
-		'updateProfile': {
+		updateProfile: {
 			method: 'PUT',
 			url: '/user',
 			body: 'school=\nmajor=\nschoolYear=\nname=\ngender=\nbirthday=\nphone=\nwechat=\nQQ=\ndescription='
 		},
-		'getProfile': {
+		getProfile: {
 			method: 'GET',
 			url: '/user/',
 			body: ''
 		},
-		'getConcerns': {
+
+		getConcerns: {
 			method: 'GET',
 			url: '/concerns',
 			body: ''
 		},
-		'addConcern': {
+		addConcern: {
 			method: 'POST',
 			url: '/concern/',
 			body: ''
 		},
-		'removeConcern': {
+		removeConcern: {
 			method: 'DELETE',
 			url: '/concern/',
 			body: ''
 		},
-		'addHelp': {
+
+		addHelp: {
 			method: 'POST',
 			url: '/help',
 			body: 'title=\ncontent=\ntags=\n'
 		},
-		'removeHelp': {
+		removeHelp: {
 			method: 'DELETE',
 			url: '/help/',
 			body: ''
 		},
-		'getHelp': {
+		getHelp: {
 			method: 'GET',
 			url: '/help/',
 			body: ''
 		},
-		'getComments': {
+		getComments: {
 			method: 'GET',
 			url: '/help//comments',
 			body: 'limit=\noffset='
 		},
-		'getHelpsByUser': {
+		getHelpsByUser: {
 			method: 'GET',
 			url: '/helps/user/',
 			body: 'limit=\noffset='
 		},
-		'getLatestHelps': {
+		getLatestHelps: {
 			method: 'GET',
 			url: '/helps/latest',
 			body: 'limit=\noffset='
 		},
-		'getConcernsHelps': {
+		getConcernsHelps: {
 			method: 'GET',
 			url: '/helps/concerns',
 			body: 'limit=\noffset='
+		},
+
+		addComment: {
+			method: 'POST',
+			url: '/comment/help/',
+			body: 'commentId=\ncontent=\nsecret=\n'
+		},
+		removeComment: {
+			method: 'DELETE',
+			url: '/comment/',
+			body: ''
+		},
+		thankCommenter: {
+			method: 'POST',
+			url: '/comment//thanks',
+			body: ''
 		}
 	};
 
@@ -115,7 +133,7 @@ $(function(){
 				return null;
 			}
 
-			var items = body.split(/[ \n]+/);
+			var items = body.split(/[ \n]*\n[ \n]*/);
 			var pair;
 			var data = {};
 			for (var i = 0; i < items.length; i++){
@@ -133,7 +151,6 @@ $(function(){
 			}
 			return data;
 		};
-
 
 		$('#result textarea').val('');
 
