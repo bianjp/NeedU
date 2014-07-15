@@ -20,7 +20,7 @@ router.get('/concerns', function(req, res){
     function(item, callback){
       if (!item){
         res.send({
-          status: 4,
+          status: 2,
           message: '用户不存在'
         });
       }
@@ -85,7 +85,7 @@ router.post('/concern/:userId', function(req, res){
     function(item, callback){
       if (!item){
         res.send({
-          status: 4,
+          status: 2,
           message: '该用户不存在'
         });
       }
@@ -96,7 +96,7 @@ router.post('/concern/:userId', function(req, res){
 
         if (concernedBy.indexOf(req.session.userId.toString()) != -1){
           res.send({
-            status: 1,
+            status: 5,
             message: '已关注该用户'
           });
         }

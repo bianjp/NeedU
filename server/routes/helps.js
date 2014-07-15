@@ -84,7 +84,7 @@ router.delete('/help/:helpId', function(req, res){
     }
     else if (numberOfRemovedDocs === 0){
       res.send({
-        status: 4,
+        status: 2,
         message: '请求删除的信息不存在'
       });
     }
@@ -168,7 +168,7 @@ router.get('/help/:helpId', function(req, res){
     }
     else if (!result.help){
       res.send({
-        status: 4,
+        status: 2,
         message: '请求的信息不存在'
       });
     }
