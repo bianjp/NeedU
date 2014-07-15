@@ -7,26 +7,47 @@ html
     script(type='text/javascript', src='/test/test.js')
   body
     h1 NeedU服务器端测试
-    div.field
-      span 方法: 
-      select#method
-        option(val='GET') GET
-        option(val='POST') POST
-        option(val='PUT') PUT
-        option(val='DELETE') DELETE
-    div.field
-      span URL: 
-      input#url(type='text', placeholder='/user')
-    div.field
-      span session ID: 
-      input#sid(type='text')
-    div.field
-      span 请求体: 
-      textarea#body(rows='5', placeholder='username=abc')
-      span 每个参数一行
-    div.operations
-      button#submit 提交
-      button#reset 重置
+    div#fields
+      div
+        span 方法: 
+        select#method
+          option(val='GET') GET
+          option(val='POST') POST
+          option(val='PUT') PUT
+          option(val='DELETE') DELETE
+      div
+        span URL: 
+        input#url(type='text', placeholder='/user')
+      div
+        span SID: 
+        input#sid(type='text')
+      div
+        span 请求体: 
+        textarea#body(rows='5', placeholder='username=abc')
+        span#note 每个参数一行
+      div.operations
+        button#submit 提交
+        button#reset 重置
+
+    div#apis
+      h2 操作
+      ul
+        li(data-operation='signup') 注册
+        li(data-operation='signin') 登录
+        li(data-operation='updatePassword') 修改密码
+        li(data-operation='updatePhoto') 更新头像
+        li(data-operation='updateProfile') 更新用户信息
+        li(data-operation='getProfile') 获取用户信息
+        li(data-operation='getConcerns') 获取关注用户列表
+        li(data-operation='addConcern') 添加关注
+        li(data-operation='removeConcern') 取消关注
+        li(data-operation='addHelp') 发布求助
+        li(data-operation='removeHelp') 删除求助
+        li(data-operation='getHelp') 获取求助详情
+        li(data-operation='getComments') 获取评论
+        li(data-operation='getHelpsByUser') 获取某用户发布的求助
+        li(data-operation='getLatestHelps') 获取最新求助
+        li(data-operation='getConcernsHelps') 获取关注用户的求助
     hr
     div#result
       h2 响应结果

@@ -12,14 +12,25 @@ router.use(function(req, res, next){
     next();
   }
   else {
+    var sid;
+    try{
+      sid = ObjectID(req.query.sid);
+    }
+    catch(e){
+      res.send({
+        status: 1,
+        message: 'Session ID错误'
+      });
+      return;
+    }
+
     async.waterfall([
       function(callback){
         req.db.collection('sessions', callback);
       },
 
       function(col, callback){
-        // must convert string to ObjectID
-        col.findOne(ObjectID(req.query.sid), callback);
+        col.findOne(sid, callback);
       }
     ], function(err, item){
         if (err || !item){
@@ -56,5 +67,12 @@ router.use('/', require('./user'));
 router.use('/', require('./concerns'));
 router.use('/', require('./helps'));
 router.use('/', require('./comments'));
+
+router.use(function(req, res, next){
+  res.send({
+    status: 4,
+    message: '没有请求的API'
+  });
+});
 
 module.exports = router;

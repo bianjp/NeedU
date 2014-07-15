@@ -3,6 +3,96 @@ $(function(){
 		$('input, select, textarea').not('#sid').val('');
 	});
 
+	var apis = {
+		'signup': {
+			method: 'POST',
+			url: '/user',
+			body: 'username=\npassword=\nschool=\nmajor=\nschoolYear=\nname=\ngender=\nbirthday=\nphone=\nwechat=\nQQ=\ndescription='
+		},
+		'signin': {
+			method: 'POST',
+			url: '/user/authentication',
+			body: 'username=\npassword='
+		},
+		'updatePassword': {
+			method: 'PUT',
+			url: '/user/password',
+			body: 'oldPassword=\npassword='
+		},
+		'updatePhoto': {
+			method: 'PUT',
+			url: '/user/photo',
+			body: ''
+		},
+		'updateProfile': {
+			method: 'PUT',
+			url: '/user',
+			body: 'school=\nmajor=\nschoolYear=\nname=\ngender=\nbirthday=\nphone=\nwechat=\nQQ=\ndescription='
+		},
+		'getProfile': {
+			method: 'GET',
+			url: '/user/',
+			body: ''
+		},
+		'getConcerns': {
+			method: 'GET',
+			url: '/concerns',
+			body: ''
+		},
+		'addConcern': {
+			method: 'POST',
+			url: '/concern/',
+			body: ''
+		},
+		'removeConcern': {
+			method: 'DELETE',
+			url: '/concern/',
+			body: ''
+		},
+		'addHelp': {
+			method: 'POST',
+			url: '/help',
+			body: 'title=\ncontent=\ntags=\n'
+		},
+		'removeHelp': {
+			method: 'DELETE',
+			url: '/help/',
+			body: ''
+		},
+		'getHelp': {
+			method: 'GET',
+			url: '/help/',
+			body: ''
+		},
+		'getComments': {
+			method: 'GET',
+			url: '/help//comments',
+			body: 'limit=\noffset='
+		},
+		'getHelpsByUser': {
+			method: 'GET',
+			url: '/helps/user/',
+			body: 'limit=\noffset='
+		},
+		'getLatestHelps': {
+			method: 'GET',
+			url: '/helps/latest',
+			body: 'limit=\noffset='
+		},
+		'getConcernsHelps': {
+			method: 'GET',
+			url: '/helps/concerns',
+			body: 'limit=\noffset='
+		}
+	};
+
+	$('#apis li').on('click', function(event){
+		var operation = $(event.target).attr('data-operation');
+		$('#method').val(apis[operation].method);
+		$('#url').val(apis[operation].url);
+		$('#body').val(apis[operation].body);
+	});
+
 	$('#submit').on('click', function(){
 		var method = $('#method').val();
 		var url = $('#url').val();
@@ -53,11 +143,11 @@ $(function(){
 			data: getRequestBody(),
 			dataType: 'text',
 			error: function(jqXHR, textStatus, errorThrown){
-				$('#result textarea').val('请求失败: ' + textStatus);
+				$('#result textarea').val(textStatus);
 			},
 			success: function(data, textStatus){
-				$('#result textarea').val('请求成功：\n' + data);
 				data = JSON.parse(data);
+				$('#result textarea').val(JSON.stringify(data, null, '    '));
 				console.log(data);
 				if (data.sid){
 					$('#sid').val(data.sid);

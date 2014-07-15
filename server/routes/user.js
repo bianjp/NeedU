@@ -220,13 +220,25 @@ router.post('/user/authentication', function(req, res){
 
 //get profile
 router.get('/user/:userId', function(req, res){
+  var userId;
+  try{
+    userId = ObjectID(req.params.userId);
+  }
+  catch(e){
+    res.send({
+      status: 1,
+      message: '参数错误'
+    });
+    return;
+  }
+
   async.waterfall([
     function(callback){
       req.db.collection('users', callback);
     },
 
     function(col, callback){
-      col.findOne(ObjectID(req.params.userId), callback);
+      col.findOne({_id: userId}, callback);
     }
   ], function(err, item){
       if (err){
@@ -242,7 +254,11 @@ router.get('/user/:userId', function(req, res){
         });
       }
       else {
-        res.send(item.profile);
+        item.profile._id = item._id;
+        res.send({
+          status: 0,
+          profile: item.profile
+        });
       }
   });
 });
@@ -271,6 +287,7 @@ router.put('/user', function(req, res){
   }
 
   var update = getUpdatedProfile(req.body, true);
+  var users;
 
   async.waterfall([
     function(callback){
@@ -278,20 +295,37 @@ router.put('/user', function(req, res){
     },
 
     function(col, callback){
+      users = col;
       col.update({_id: req.session.userId}, {
         $set: update
       }, callback);
+    },
+
+    function(numOfAffectedDocs, result, callback){
+      if (numOfAffectedDocs){
+        users.findOne({_id: req.session.userId}, callback);
+      }
+      else {
+        res.send({
+          status: 3,
+          message: '更新失败'
+        });
+      }
     }
-  ], function(err, result){
+  ],
+
+  function(err, item){
     if (err){
       res.send({
         status: 3,
         message: '操作失败'
       });
     }
-    else{
+    else {
+      item.profile._id = item._id;
       res.send({
-        status: 0
+        status: 0,
+        profile: item.profile
       });
     }
   });
