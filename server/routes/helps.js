@@ -8,8 +8,7 @@ var _ = require('underscore');
 router.post('/help', function(req, res){
 
   // validate
-console.log('tags: ');
-console.log(req.body.tags);
+
   var help = {
     createdAt: new Date(),
     createdBy: req.session.userId,
@@ -50,6 +49,19 @@ console.log(req.body.tags);
 // delete a help
 router.delete('/help/:helpId', function(req, res){
   var helps;
+  var helpId;
+
+  try{
+    helpId = ObjectID(req.params.helpId);
+  }
+  catch(e){
+    res.send({
+      status: 1,
+      message: '参数错误'
+    });
+    return;
+  }
+
   async.waterfall([
     function(callback){
       req.db.collection('helps', callback);
@@ -57,7 +69,7 @@ router.delete('/help/:helpId', function(req, res){
 
     function(col, callback){
       col.remove({
-        _id: ObjectID(req.params.helpId),
+        _id: helpId,
         createdBy: req.session.userId
       }, callback);
     }
@@ -86,7 +98,17 @@ router.delete('/help/:helpId', function(req, res){
 
 // get help detail and 10 latest comments
 router.get('/help/:helpId', function(req, res){
-  var helpId = ObjectID(req.params.helpId);
+  var helpId;
+  try{
+    helpId = ObjectID(req.params.helpId);
+  }
+  catch(e){
+    res.send({
+      status: 1,
+      message: '参数错误'
+    });
+    return;
+  }
 
   async.parallel({
     help: function(callback){
@@ -122,7 +144,7 @@ router.get('/help/:helpId', function(req, res){
               createdAt: -1
             },
             limit: 10
-          }, callback);
+          }).toArray(callback);
         }
       ],
 
@@ -162,6 +184,18 @@ router.get('/help/:helpId', function(req, res){
 });
 
 router.get('/help/:helpId/comments', function(req, res){
+  var helpId;
+  try{
+    helpId = ObjectID(req.params.helpId);
+  }
+  catch(e){
+    res.send({
+      status: 1,
+      message: '参数错误'
+    });
+    return;
+  }
+
   var query = {
     limit: parseInt(req.query.limit) || 10,
     offset: parseInt(req.query.offset) || 0
@@ -173,13 +207,13 @@ router.get('/help/:helpId/comments', function(req, res){
     },
 
     function(col, callback){
-      col.find({helpId: ObjectID(req.params.helpId)}, {
+      col.find({helpId: helpId}, {
         sort: {
           createdAt: -1
         },
         limit: query.limit,
         skip: query.offset
-      }, callback);
+      }).toArray(callback);
     }
   ],
 
@@ -199,14 +233,14 @@ router.get('/help/:helpId/comments', function(req, res){
   });
 });
 
-var getHelps = function(selector, options, res){
+var getHelps = function(selector, options, db, res){
   async.waterfall([
     function(callback){
-      req.db.collection('helps', callback);
+      db.collection('helps', callback);
     },
 
     function(col, callback){
-      col.find(selector, options, callback);
+      col.find(selector, options).toArray(callback);
     }
   ],
 
@@ -228,8 +262,20 @@ var getHelps = function(selector, options, res){
 
 // get helps added by the user
 router.get('/helps/user/:userId', function(req, res){
+  var userId;
+  try{
+    userId = ObjectID(req.params.userId);
+  }
+  catch(e){
+    res.send({
+      status: 1,
+      message: '参数错误'
+    });
+    return;
+  }
+
   var selector = {
-    createdBy: ObjectID(req.params.userId)
+    createdBy: userId
   };
   var options = {
     sort: {
@@ -238,7 +284,7 @@ router.get('/helps/user/:userId', function(req, res){
     limit: parseInt(req.query.limit) || 10,
     skip: parseInt(req.query.offset) || 0
   };
-  getHelps(selector, options, res);
+  getHelps(selector, options, req.db, res);
 });
 
 // get the latest helps
@@ -256,7 +302,7 @@ router.get('/helps/latest', function(req, res){
       $in: req.query.tags
     };
   }
-  getHelps(selector, options, res);
+  getHelps(selector, options, req.db, res);
 });
 
 // get the helps added by the persons I concerns
@@ -292,7 +338,7 @@ router.get('/helps/concerns', function(req, res){
           $in: item.concerns
         }
       };
-      getHelps(selector, options, res);
+      getHelps(selector, options, req.db, res);
     }
   });
 });
