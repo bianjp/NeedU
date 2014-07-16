@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@+id/relativelayout"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#D1EEEE">
+    
+	<TextView android:id="@+id/TextView01"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:gravity="center"
+	    android:text="@string/about_needu"
+	    android:layout_marginTop="10dp"
+	    android:textSize="20sp">
+	</TextView>
+	<View android:id="@+id/line"
+	    android:layout_width="fill_parent"
+	    android:layout_height="1px"
+	    android:layout_below="@id/TextView01" 
+	    android:background="#000000"
+	    android:layout_margin="10dp">
+	</View>
+	
+	<ImageView 
+	    android:id="@+id/logo"
+	    android:src="@drawable/logo"
+	    android:layout_width="100dp"
+	    android:layout_height="100dp"
+	    android:layout_centerInParent="true"
+	    android:layout_below="@id/line"
+	    android:scaleType="centerCrop"
+	    android:contentDescription="@string/app_name"/>
+	
+	<LinearLayout android:id="@+id/linearlayout01"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_below="@id/logo"
+	    android:orientation="vertical"
+	    android:layout_margin="20dp">
+	    <TextView android:id="@+id/TextView02"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/version"
+			android:layout_margin="10dp">
+		</TextView>
+		<TextView android:id="@+id/TextView03"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/function"
+			android:layout_margin="10dp">
+		</TextView>
+		<TextView android:id="@+id/TextView04"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/service"
+			android:layout_margin="10dp">
+		</TextView>
+	</LinearLayout>
+
+	<LinearLayout android:id="@+id/linearlayout02"
+	    android:orientation="horizontal"
+	    android:layout_width="fill_parent"
+	    android:layout_height="60dp"
+	    android:layout_alignParentBottom="true"
+	    android:background="#BB768e95">
+	    <Button android:text="@string/squareButton"
+			android:id="@+id/button1"
+			android:layout_width="wrap_content"
+			android:layout_height="60dp"
+			android:layout_weight="1"
+			android:background="#BB768e95">
+		</Button>
+		<Button android:text="@string/personalButton"
+			android:id="@+id/button2"
+			android:layout_width="wrap_content"
+			android:layout_height="60dp"
+			android:layout_weight="1"
+			android:background="#BB768e95">
+		</Button>
+		<Button android:text="@string/setButton"
+			android:id="@+id/button3"
+			android:layout_width="wrap_content"
+			android:layout_height="60dp"
+			android:layout_weight="1"
+			android:background="#BB768e95">
+		</Button>
+	</LinearLayout>
+	
+	<View android:id="@+id/below_line"
+	    android:layout_width="fill_parent"
+	    android:layout_height="1px"
+	    android:layout_above="@id/linearlayout02" 
+	    android:layout_alignLeft="@id/linearlayout01"
+	    android:layout_alignRight="@id/linearlayout01"
+	    android:background="#000000"
+	    android:layout_marginBottom="4dp">
+	</View>
+	<TextView android:id="@+id/TextView05"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_above="@id/below_line"
+		android:layout_alignLeft="@id/linearlayout01"
+		android:text="@string/Copyright"
+		android:padding="4dp">
+	</TextView>
+	<View
+	    android:layout_width="fill_parent"
+	    android:layout_height="1px"
+	    android:layout_above="@id/TextView05" 
+	    android:layout_alignLeft="@id/linearlayout01"
+	    android:layout_alignRight="@id/linearlayout01"
+	    android:background="#000000">
+	</View>
+</RelativeLayout>

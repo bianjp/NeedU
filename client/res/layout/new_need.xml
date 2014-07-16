@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@+id/relativelayout"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#D1EEEE">
+    
+	<TextView android:id="@+id/TextView01"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:gravity="center"
+	    android:text="@string/new_need"
+	    android:layout_marginTop="10dp"
+	    android:textSize="20sp">
+	</TextView>
+	<View android:id="@+id/line"
+	    android:layout_width="fill_parent"
+	    android:layout_height="1px"
+	    android:layout_below="@id/TextView01" 
+	    android:background="#000000"
+	    android:layout_margin="10dp">
+	</View>
+
+	<LinearLayout android:id="@+id/linearlayout01"
+	    android:orientation="horizontal"
+	    android:layout_width="fill_parent"
+	    android:layout_height="60dp"
+	    android:layout_alignParentBottom="true"
+	    android:background="#BB768e95">
+	    <Button android:text="@string/squareButton"
+			android:id="@+id/squareButton"
+			android:layout_width="wrap_content"
+			android:layout_height="60dp"
+			android:layout_weight="1"
+			android:background="#BB768e95">
+		</Button>
+		<Button android:text="@string/personalButton"
+			android:id="@+id/personalButton"
+			android:layout_width="wrap_content"
+			android:layout_height="60dp"
+			android:layout_weight="1"
+			android:background="#BB768e95">
+		</Button>
+		<Button android:text="@string/setButton"
+			android:id="@+id/setButton"
+			android:layout_width="wrap_content"
+			android:layout_height="60dp"
+			android:layout_weight="1"
+			android:background="#BB768e95">
+		</Button>
+	</LinearLayout>
+	
+	<RelativeLayout android:id="@+id/relativelayout01"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_below="@id/TextView01"
+	    android:layout_margin="20dp"
+	    android:padding="10dp"
+	    android:orientation="vertical"
+	    android:background="@drawable/bg_edittext_normal2">
+	    <TextView android:id="@+id/TextView02"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:text="@string/target">
+		</TextView>
+		<EditText android:id="@+id/TargetEdit"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:layout_toRightOf="@id/TextView02"
+		    android:layout_alignBaseline="@id/TextView02"
+		    android:text=""
+		    android:inputType="none"
+		    android:ems="5"
+		    android:background="@drawable/bg_edittext_normal">
+		</EditText>
+		<EditText android:id="@+id/ContentEdit"
+		    android:layout_width="fill_parent"
+		    android:layout_height="100dp"
+		    android:layout_below="@id/TextView02"
+		    android:layout_alignParentLeft="true"
+		    android:layout_alignParentRight="true"
+		    android:text=""
+		    android:inputType="none"
+		    android:background="@drawable/bg_edittext_normal">
+		</EditText>
+		<LinearLayout android:id="@+id/addImageLayout"
+		    android:layout_alignLeft="@id/ContentEdit"
+		    android:layout_alignRight="@id/ContentEdit"
+	    	android:layout_below="@id/ContentEdit"
+	    	android:layout_width="fill_parent"
+	   		android:layout_height="50dp"
+	   		android:orientation="horizontal"
+	   		android:layout_marginTop="10dp"/>
+		
+		<Button android:text="@string/addPic"
+			android:id="@+id/AddButton"
+			android:layout_width="wrap_content"
+			android:layout_height="40dp"
+			android:layout_below="@id/addImageLayout"
+			android:layout_alignLeft="@id/TextView02">
+		</Button>
+	</RelativeLayout>
+	
+	<Button android:text="@string/makesure"
+		android:id="@+id/MakesureButton"
+		android:layout_width="100dp"
+		android:layout_height="40dp"
+		android:layout_below="@id/relativelayout01"
+		android:layout_alignLeft="@id/relativelayout01">
+	</Button>
+	<Button android:text="@string/detect"
+		android:id="@+id/DetectButton"
+		android:layout_width="100dp"
+		android:layout_height="40dp"
+		android:layout_alignTop="@id/MakesureButton"
+		android:layout_alignRight="@id/relativelayout01">
+	</Button>
+</RelativeLayout>

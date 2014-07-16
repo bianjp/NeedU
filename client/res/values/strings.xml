@@ -4,5 +4,54 @@
     <string name="app_name">NeedU</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
+    <string name="message">消息模式</string>
+    <string name="tips_mode">提示模式</string>
+    <string name="tips_mode1">振动模式</string>
+    <string name="tips_mode2">系统音模式</string>
+    <string name="tips_check">退出后仍接收消息提示</string>
+   
+    <string name="squareButton">广场</string>
+    <string name="personalButton">个人</string>
+    <string name="setButton">设置</string>
+   
+    <string name="about_needu">关于NeedU</string>
+    <string name="version">当前版本：</string>
+    <string name="function">功能介绍：</string>
+    <string name="service">服务条款：</string>
+    <string name="Copyright">Copyright</string>
+    
+    <string name="name">昵称</string>
+    <string name="college">学院</string>
+    <string name="number">被感谢次数</string>
+    <string name="personal_description">个人描述：</string>
+    <string name="sampleInfo">基本信息：</string>
+    <string name="true_name">姓名：</string>
+    <string name="school">学校：</string>
+    <string name="sexual">性别：</string>
+    <string name="birthday">生日：</string>
+    <string name="telephone">手机：</string>
+    <string name="QQ">QQ：</string>
+    <string name="wechat">微信：</string>
+    
+    <string name="personal_data">个人资料</string>
+    <string name="announce">我发布的</string>
+    <string name="comment">我评论的</string>
+    <string name="interest">我关注的</string>
 
+    <string name="new_need">发布求助</string>
+    <string name="announcedNeed01"></string>
+    <string name="announcedNeed02"></string>
+    <string name="announcedNeed03"></string>
+    
+    <string name="commentedNeed01"></string>
+    <string name="commentedNeed02"></string>
+    <string name="commentedNeed03"></string>
+    
+    <string name="interest_topics">关注的话题：</string>
+    <string name="interest_users">关注的用户：</string>
+    
+    <string name="makesure">确定</string>
+    <string name="detect">取消</string>
+    <string name="target">标签</string>
+    <string name="addPic">添加图片</string>
 </resources>
