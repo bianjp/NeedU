@@ -5,8 +5,11 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="11"
         android:targetSdkVersion="18" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -14,13 +17,81 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.example.needu.MainActivity"
+            android:name=".RegisterActivity"
             android:label="@string/app_name" >
+        </activity>
+        <activity
+            android:name=".LoginActivity"
+            android:label="@string/title_activity_login" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".SetActivity"
+            android:label="@string/title_activity_set" >
+        </activity>
+        <activity
+            android:name=".ChangePasswordActivity"
+            android:label="@string/title_activity_change_password"
+            android:parentActivityName=".SetActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.needu.SetActivity" />
+        </activity>
+        <activity
+            android:name=".MessageTipsActivity"
+            android:label="@string/title_activity_message_tips"
+            android:parentActivityName=".SetActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.needu.SetActivity" />
+        </activity>
+        <activity
+            android:name=".AboutActivity"
+            android:label="@string/title_activity_about"
+            android:parentActivityName=".SetActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.needu.SetActivity" />
+        </activity>
+        <activity
+            android:name=".PersonalDataActivity"
+            android:label="@string/title_activity_personal_data" >
+        </activity>
+        <activity
+            android:name=".PersonalAnnounceActivity"
+            android:label="@string/title_activity_personal_announce" >
+        </activity>
+        <activity
+            android:name=".PersonalCommentActivity"
+            android:label="@string/title_activity_personal_comment" >
+        </activity>
+        <activity
+            android:name=".PersonalInterestActivity"
+            android:label="@string/title_activity_personal_interest" >
+        </activity>
+        <activity
+            android:name=".NewNeedActivity"
+            android:label="@string/title_activity_new_need"
+            android:parentActivityName=".PersonalAnnounceActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.needu.PersonalAnnounceActivity" />
+        </activity>
+        <activity
+            android:name=".GroundActivity"
+            android:label="@string/title_activity_ground" >
+        </activity>
+        <activity
+            android:name=".RankActivity"
+            android:label="@string/title_activity_rank"
+            android:parentActivityName=".GroundActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.needu.GroundActivity" />
         </activity>
     </application>
 

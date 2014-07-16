@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/relativelayout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="#D1EEEE"
+    android:gravity="top" >
+    
+    <RelativeLayout android:id="@+id/relativelayout01"
+        android:layout_alignParentTop="true"
+        android:layout_width="fill_parent"
+        android:layout_height="100dp"
+        android:background="@drawable/background">
+        <ImageView
+	    	android:id="@+id/headpic"
+	    	android:src="@drawable/headpic"
+	    	android:layout_width="75dp"
+	    	android:layout_height="75dp"
+	    	android:layout_alignParentBottom="true"
+	    	android:scaleType="centerCrop"
+	    	android:layout_margin="10dp"
+	    	android:contentDescription="@string/app_name"/>
+		<TextView android:id="@+id/name"
+		    android:layout_height="25dp"
+		    android:layout_width="wrap_content"
+		    android:gravity="center"
+		    android:layout_toRightOf="@id/headpic"
+		    android:layout_alignTop="@id/headpic"
+		    android:layout_marginTop="10dp"
+		    android:text="@string/name"
+		    android:textSize="15sp"
+		    android:textStyle="bold">
+		</TextView>
+		<TextView android:id="@+id/college"
+		    android:layout_height="25dp"
+		    android:layout_width="wrap_content"
+		    android:gravity="center"
+		    android:layout_toRightOf="@id/headpic"
+		    android:layout_alignBottom="@id/headpic"
+		    android:layout_marginBottom="10dp"
+		    android:layout_alignLeft="@id/name"
+		    android:text="@string/school">
+		</TextView>
+		<TextView android:id="@+id/appreciatedNum"
+		    android:layout_height="20dp"
+		    android:layout_width="wrap_content"
+		    android:gravity="center"
+		    android:layout_alignParentRight="true"
+		    android:layout_alignBottom="@id/headpic"
+		    android:layout_marginRight="15dp"
+		    android:text="@string/number">
+		</TextView>
+		<ImageView
+	    	android:id="@+id/heart"
+	    	android:src="@drawable/heart"
+	    	android:layout_width="20dp"
+	    	android:layout_height="20dp"
+	    	android:layout_alignBottom="@id/appreciatedNum"
+	    	android:layout_toLeftOf="@id/appreciatedNum"
+	    	android:scaleType="centerCrop"
+	    	android:contentDescription="@string/app_name"/>
+	</RelativeLayout>
+	
+	<LinearLayout android:id="@+id/linearlayout01"
+	    android:layout_width="fill_parent"
+	    android:layout_height="30dp"
+	    android:layout_below="@id/relativelayout01"
+	    android:orientation="horizontal"
+	    android:background="#F0F8FF">
+	    <Button android:text="@string/personal_data"
+			android:id="@+id/personalDataButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:background="#F0F8FF"
+			android:textSize="12sp">
+		</Button>
+		<Button android:text="@string/announce"
+			android:id="@+id/announceButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:background="#F0F8FF"
+			android:textSize="12sp">
+		</Button>
+		<Button android:text="@string/comment"
+			android:id="@+id/commentButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:background="#F0F8FF"
+			android:textSize="12sp">
+		</Button>
+		<Button android:text="@string/interest"
+			android:id="@+id/interestButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:background="#F0F8FF"
+			android:textSize="12sp">
+		</Button>
+	</LinearLayout>
+	
+	<TextView android:id="@+id/personal_description"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_below="@id/linearlayout01"
+		android:text="@string/personal_description"
+		android:layout_margin="10dp">
+	</TextView>
+
+	<LinearLayout android:id="@+id/linearlayout02"
+	    android:orientation="vertical"
+	    android:layout_height="wrap_content"
+	    android:layout_width="fill_parent"
+	    android:layout_below="@id/personal_description"
+	    android:layout_margin="10dp">
+	    <TextView android:id="@+id/TextView02"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/sampleInfo"
+			android:layout_marginBottom="5dp"
+			android:textStyle="bold">
+		</TextView>
+		<TextView android:id="@+id/name2"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/name">
+		</TextView>
+		<TextView android:id="@+id/school"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/school">
+		</TextView>
+		<TextView android:id="@+id/major"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/major">
+		</TextView>
+		<TextView android:id="@+id/schoolYear"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="入学年份：">
+		</TextView>
+		<TextView android:id="@+id/sexual"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/sexual">
+		</TextView>
+		<TextView android:id="@+id/birthday"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/birthday">
+		</TextView>
+		<TextView android:id="@+id/telephone"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/telephone">
+		</TextView>
+		<TextView android:id="@+id/QQ"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/QQ">
+		</TextView>
+		<TextView android:id="@+id/wechat"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/wechat">
+		</TextView>
+	</LinearLayout>
+	
+	<LinearLayout
+	    android:orientation="horizontal"
+	    android:layout_width="fill_parent"
+	    android:layout_height="60dp"
+	    android:layout_alignParentBottom="true"
+	    android:background="#BB768e95">
+	    <Button
+			android:id="@+id/squareButton"
+			android:text="广场"
+			android:layout_width="wrap_content"
+			android:layout_height="60dp"
+			android:layout_weight="1"
+			android:background="#BB768e95"
+			style="@android:attr/buttonBarButtonStyle" >
+		</Button>
+		<Button 
+			android:id="@+id/personalButton"
+			android:text="个人"
+			android:layout_width="wrap_content"
+			android:layout_height="60dp"
+			android:layout_weight="1"
+			android:background="#BB768e95"
+			style="@android:attr/buttonBarButtonStyle" >
+		</Button>
+		<Button
+			android:id="@+id/setButton"
+			android:text="设置"
+			android:layout_width="wrap_content"
+			android:layout_height="60dp"
+			android:layout_weight="1"
+			android:background="#BB768e95"
+			style="@android:attr/buttonBarButtonStyle" >
+		</Button>
+	</LinearLayout>
+</RelativeLayout>
