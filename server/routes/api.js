@@ -66,6 +66,7 @@ router.use(function(req, res, next){
 router.use('/', require('./user'));
 router.use('/', require('./concerns'));
 router.use('/', require('./helps'));
+router.use('/', require('./comments'));
 
 router.use(function(req, res, next){
   res.send({
