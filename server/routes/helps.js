@@ -14,7 +14,7 @@ router.post('/help', function(req, res){
     createdBy: req.session.userId,
     title: req.body.title,
     content: req.body.content,
-    tags: req.body.tags || [],
+    tags: req.body.tags ? (req.body.tags instanceof Array ? req.body.tags : [req.body.tags]) : [],
     up: [],
     down: [],
     comments: []
@@ -298,9 +298,14 @@ router.get('/helps/latest', function(req, res){
     skip: parseInt(req.query.offset) || 0
   };
   if (req.query.tags){
-    selector.tags = {
-      $in: req.query.tags
-    };
+    if (req.query.tags instanceof Array){
+      selector.tags = {
+        $all: req.query.tags
+      };
+    }
+    else {
+      selector.tags = req.query.tags;
+    }
   }
   getHelps(selector, options, req.db, res);
 });

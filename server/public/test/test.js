@@ -77,7 +77,7 @@ $(function(){
 		'getLatestHelps': {
 			method: 'GET',
 			url: '/helps/latest',
-			body: 'limit=\noffset='
+			body: 'limit=\noffset=\ntags='
 		},
 		'getConcernsHelps': {
 			method: 'GET',
