@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.needu"
+    package="com.zhuomiankaifa"
     android:versionCode="1"
     android:versionName="1.0" >
 
     <uses-sdk
         android:minSdkVersion="8"
-        android:targetSdkVersion="18" />
+        android:targetSdkVersion="19" />
 
     <application
         android:allowBackup="true"
@@ -14,13 +14,47 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.example.needu.MainActivity"
-            android:label="@string/app_name" >
+            android:name="com.zhuomiankaifa.Ranking"
+            android:label="@string/title_activity_ranking" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name="com.zhuomiankaifa.MainActivity"
+            android:label="@string/app_name" >
+        </activity>
+        <activity
+            android:name="com.zhuomiankaifa.Set"
+            android:label="@string/title_activity_set" >
+        </activity>
+        <activity
+
+            
+             android:name="com.zhuomiankaifa.Ground"
+            android:label="@string/title_activity_ground" >
+        </activity>
+        <activity
+            
+
+            android:name="com.zhuomiankaifa.Newsname"
+            android:label="@string/title_activity_newsname" >
+        </activity>
+        <activity
+            android:name="com.zhuomiankaifa.Changepassword"
+            android:label="@string/title_activity_changepassword" >
+        </activity>
+        <activity
+            android:name="com.zhuomiankaifa.Registration"
+            android:label="@string/title_activity_registration" >
+        </activity>
+        <activity
+            
+
+            android:name="com.zhuomiankaifa.Login"
+            android:label="@string/title_activity_login" >
         </activity>
     </application>
 
