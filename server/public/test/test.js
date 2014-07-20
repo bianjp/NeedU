@@ -87,6 +87,11 @@ $(function(){
 			body: 'limit=\noffset='
 		},
 
+		getComment: {
+			method: 'GET',
+			url: '/comment/',
+			body: ''
+		},
 		addComment: {
 			method: 'POST',
 			url: '/comment/help/',

@@ -4,6 +4,51 @@ var async = require('async');
 var ObjectID = require('mongodb').ObjectID;
 var notification = require('../lib/notification');
 
+router.get('/comment/:commentId', function(req, res){
+  var commentId;
+  try{
+    commentId = ObjectID(req.params.commentId);
+  }
+  catch(e){
+    res.send({
+      status: 1,
+      message: '参数错误'
+    });
+    return;
+  }
+
+  async.waterfall([
+    function(callback){
+      req.db.collection('helps', callback);
+    },
+
+    function(col, callback){
+      col.findOne({_id: commentId}, callback);
+    }
+  ],
+
+  function(err, item){
+    if (err){
+      res.send({
+        status: 3,
+        message: '操作失败'
+      });
+    }
+    else if (!item){
+      res.send({
+        status: 2,
+        message: '请求的对象不存在'
+      });
+    }
+    else {
+      res.send({
+        status: 0,
+        comment: item
+      });
+    }
+  });
+});
+
 router.post('/comment/help/:helpId', function(req, res){
   var helpId;
   try{
