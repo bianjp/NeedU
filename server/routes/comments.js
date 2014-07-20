@@ -49,6 +49,26 @@ router.get('/comment/:commentId', function(req, res){
   });
 });
 
+var modifyCommentCount = function(db, helpId, n){
+  async.waterfall([
+    function(callback){
+      db.collection('helps', callback);
+    },
+
+    function(col, callback){
+      col.update({_id: helpId}, {
+        $inc: {
+          commentCount: n
+        }
+      }, callback);
+    }
+  ],
+
+  function(err, numOfAffectedDocs){
+
+  });
+};
+
 var insertComment = function(req, res, comment){
   async.waterfall([
     function(callback){
@@ -72,6 +92,9 @@ var insertComment = function(req, res, comment){
         status: 0,
         comment: items[0]
       });
+      
+      modifyCommentCount(req.db, comment.helpId, 1);
+
       notification.informNewComment(req.db, items[0]);
       if (items[0].commentId){
         notification.informNewReply(req.db, items[0]);
@@ -161,13 +184,34 @@ router.delete('/comment/:commentId', function(req, res){
     return;
   }
 
+  var comments;
+  var helpId;
+
   async.waterfall([
     function(callback){
       req.db.collection('comments', callback);
     },
 
     function(col, callback){
-      col.remove({_id: commentId}, callback);
+      col.findOne({_id: commentId}, callback);
+      comments = col;
+    },
+
+    function(item, callback){
+      if (item){
+        helpId = item.helpId;
+        callback(null);
+      }
+      else {
+        res.send({
+          status: 2,
+          message: '请求删除的信息不存在'
+        });
+      }
+    },
+
+    function(callback){
+      comments.remove({_id: commentId}, callback);
     }
   ],
 
@@ -188,6 +232,8 @@ router.delete('/comment/:commentId', function(req, res){
       res.send({
         status: 0
       });
+
+      modifyCommentCount(req.db, helpId, -1);
     }
   });
 });
