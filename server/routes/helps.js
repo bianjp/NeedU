@@ -18,7 +18,7 @@ router.post('/help', function(req, res){
     tags: req.body.tags ? (req.body.tags instanceof Array ? req.body.tags : [req.body.tags]) : [],
     up: [],
     down: [],
-    comments: []
+    commentCount: 0
   };
 
   async.waterfall([
@@ -112,63 +112,24 @@ router.get('/help/:helpId', function(req, res){
     return;
   }
 
-  async.parallel({
-    help: function(callback){
-      async.waterfall([
-        function(callback){
-          req.db.collection('helps', callback);
-        },
-
-        function(col, callback){
-          col.findOne({_id: helpId}, callback);
-        },
-      ],
-
-      function(err, item){
-        if (err){
-          callback(err);
-        }
-        else {
-          callback(null, item);
-        }
-      });
+  async.waterfall([
+    function(callback){
+      req.db.collection('helps', callback);
     },
 
-    comments: function(callback){
-      async.waterfall([
-        function(callback){
-          req.db.collection('comments', callback);
-        },
-
-        function(col, callback){
-          col.find({helpId: helpId}, {
-            sort: {
-              createdAt: -1
-            },
-            limit: 10
-          }).toArray(callback);
-        }
-      ],
-
-      function(err, items){
-        if (err){
-          callback(err);
-        }
-        else {
-          callback(null, items);
-        }
-      });
+    function(col, callback){
+      col.findOne({_id: helpId}, callback);
     }
-  },
+  ],
 
-  function(err, result){
+  function(err, item){
     if (err){
       res.send({
         status: 3,
         message: '操作失败'
       });
     }
-    else if (!result.help){
+    else if (!item){
       res.send({
         status: 2,
         message: '请求的信息不存在'
@@ -177,12 +138,10 @@ router.get('/help/:helpId', function(req, res){
     else {
       res.send({
         status: 0,
-        help: result.help,
-        comments: result.comments
+        help: item
       });
     }
   });
-
 });
 
 router.get('/help/:helpId/comments', function(req, res){
