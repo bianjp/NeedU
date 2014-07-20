@@ -4,6 +4,7 @@ var async = require('async');
 var crypto = require('crypto');
 var ObjectID = require('mongodb').ObjectID;
 var _ = require('underscore');
+var notification = require('../lib/notification');
 
 router.get('/concerns', function(req, res){
   var users;
@@ -134,6 +135,7 @@ router.post('/concern/:userId', function(req, res){
             res.send({
               status: 0
             });
+            notification.informNewConcerner(req.db, req.session.userId, ObjectID(req.params.userId));
           }
       });
     }

@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var ObjectID = require('mongodb').ObjectID;
+var notification = require('../lib/notification');
 
 router.post('/comment/help/:helpId', function(req, res){
   var helpId;
@@ -60,6 +61,10 @@ router.post('/comment/help/:helpId', function(req, res){
         status: 0,
         comment: items[0]
       });
+      notification.informNewComment(req.db, items[0]);
+      if (items[0].commentId){
+        notification.informNewReply(req.db, items[0]);
+      }
     }
   });
 });

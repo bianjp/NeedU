@@ -3,6 +3,7 @@ var router = express.Router();
 var async = require('async');
 var ObjectID = require('mongodb').ObjectID;
 var _ = require('underscore');
+var notification = require('../lib/notification');
 
 // add a help
 router.post('/help', function(req, res){
@@ -42,6 +43,7 @@ router.post('/help', function(req, res){
         status: 0,
         help: items[0]
       });
+      notification.informNewHelp(req.db, items[0]);
     }
   });
 });
