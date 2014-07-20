@@ -101,6 +101,22 @@ $(function(){
 			method: 'POST',
 			url: '/comment//thanks',
 			body: ''
+		},
+
+		getNotifications: {
+			method: 'GET',
+			url: '/notifications',
+			body: ''
+		},
+		removeNotification: {
+			method: 'DELETE',
+			url: '/notifications/',
+			body: ''
+		},
+		removeAllNotifications: {
+			method: 'DELETE',
+			url: '/notifications/all',
+			body: ''
 		}
 	};
 
