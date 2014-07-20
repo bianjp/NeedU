@@ -66,6 +66,7 @@ router.delete('/notifications/:id', function(req, res){
       status: 1,
       message: '参数错误'
     });
+    return;
   }
 
   async.waterfall([
