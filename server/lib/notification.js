@@ -109,7 +109,7 @@ var informNewComment = function(db, comment){
       getUserName(db, comment.createdBy, callback);
     },
     help: function(callback){
-      getHelpTitle(db, comment.helpId, callback);
+      getHelp(db, comment.helpId, callback);
     }
   },
 
