@@ -49,41 +49,7 @@ router.get('/comment/:commentId', function(req, res){
   });
 });
 
-router.post('/comment/help/:helpId', function(req, res){
-  var helpId;
-  try{
-    helpId = ObjectID(req.params.helpId);
-  }
-  catch(e){
-    res.send({
-      status: 1,
-      message: '参数错误'
-    });
-    return;
-  }
-
-  var comment = {
-    createdAt: new Date(),
-    createdBy: req.session.userId,
-    helpId: helpId,
-    commentId: null,
-    content: req.body.content,
-    secret: !!parseInt(req.body.secret),
-    thanked: false
-  };
-  if (req.body.commentId){
-    try{
-      comment.commentId = ObjectID(req.body.commentId);
-    }
-    catch(e){
-      res.send({
-        status: 1,
-        message: '参数错误'
-      });
-      return;
-    }
-  }
-
+var insertComment = function(req, res, comment){
   async.waterfall([
     function(callback){
       req.db.collection('comments', callback);
@@ -112,6 +78,75 @@ router.post('/comment/help/:helpId', function(req, res){
       }
     }
   });
+};
+
+router.post('/comment/help/:helpId', function(req, res){
+  var helpId;
+  try{
+    helpId = ObjectID(req.params.helpId);
+  }
+  catch(e){
+    res.send({
+      status: 1,
+      message: '参数错误'
+    });
+    return;
+  }
+
+  var comment = {
+    createdAt: new Date(),
+    createdBy: req.session.userId,
+    helpId: helpId,
+    commentId: null,
+    replyTo: null,
+    content: req.body.content,
+    secret: !!parseInt(req.body.secret),
+    thanked: false
+  };
+  if (!req.body.commentId){
+    insertComment(req, res, comment);
+  }
+  else {
+    try{
+      comment.commentId = ObjectID(req.body.commentId);
+    }
+    catch(e){
+      res.send({
+        status: 1,
+        message: '参数错误'
+      });
+      return;
+    }
+    async.waterfall([
+      function(callback){
+        req.db.collection('comments', callback);
+      },
+
+      function(col, callback){
+        col.findOne({_id: comment.commentId}, callback);
+      }
+    ],
+
+    function(err, item){
+      if (err){
+        res.send({
+          status: 3,
+          message: '操作失败'
+        });
+      }
+      else if (!item){
+        res.send({
+          status: 2,
+          message: '所回复评论不存在'
+        });
+      }
+      else {
+        comment.replyTo = item.createdBy;
+        insertComment(req, res, comment);
+      }
+    });
+  }
+
 });
 
 router.delete('/comment/:commentId', function(req, res){

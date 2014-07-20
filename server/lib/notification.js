@@ -138,49 +138,29 @@ var informNewComment = function(db, comment){
   });
 };
 
-
-var getCommenter = function(db, commentId, callback){
-  async.waterfall([
-    function(callback){
-      db.collection('comments', callback);
-    },
-
-    function(col, callback){
-      col.findOne({_id: commentId}, callback);
-    }
-  ],
-
-  function(err, item){
-    callback(err || null, item ? item.createdBy : null);
-  });
-};
-
-
 var informNewReply = function(db, comment){
-  async.parallel({
-    authorName: function(callback){
-      getUserName(db, comment.createdBy, callback);
-    },
-    userId: function(callback){ //被回复者
-      getCommenter(db, comment.commentId, callback);
+  getUserName(db, comment.createdBy, function(err, authorName){
+    if (err){
+      console.log('Failed to get authorName while informing new reply');
     }
-  },
+    else {
+      var notification = {
+        createdAt: comment.createdAt,
+        userId: comment.replyTo,
+        type: 3,
+        authorId: comment.createdBy,
+        authorName: authorName,
+        helpId: comment.helpId,
+        commentId: comment._id,
+        commentContent: comment.content
+      };
 
-  function(err, result){
-    var notification = {
-      createdAt: comment.createdAt,
-      userId: result.userId,
-      type: 3,
-      authorId: comment.createdBy,
-      authorName: result.authorName,
-      commentId: comment._id,
-      commentContent: comment.content
-    };
-    inform(db, notification, function(err){
-      if (err){
-        console.log('Failed while inform new reply');
-      }
-    });
+      inform(db, notification, function(err){
+        if (err){
+          console.log('Failed while informing new reply');
+        }
+      });
+    }
   });
 };
 
