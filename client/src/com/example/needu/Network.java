@@ -1,0 +1,87 @@
+package com.example.needu;
+
+import java.util.List;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
+
+import android.util.Log;
+
+public class Network {
+	public static final String SERVER = "http://222.200.181.217:3000/api";
+	public static final int MSG_OK = 200;
+	
+	private HttpClient client = new DefaultHttpClient();
+	
+	public JSONObject get(String serverUrl) {
+		HttpGet get = new HttpGet(serverUrl);
+		HttpResponse response = null;
+		JSONObject json = null;
+		try {
+			response = client.execute(get);
+			json = handleResponse(response);
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return json;
+	}
+	
+	public JSONObject post(String serverUrl, List<NameValuePair> params) {
+		HttpPost post = new HttpPost(serverUrl);
+		HttpResponse response = null;
+		JSONObject json = null;
+		try {
+			post.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
+			response = client.execute(post);
+			json = handleResponse(response);
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return json;
+	}
+	
+	public JSONObject put(String serverUrl, List<NameValuePair> params) {
+		HttpPut put = new HttpPut(serverUrl);
+		HttpResponse response = null;
+		JSONObject json = null;
+		try {
+			put.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
+			response = client.execute(put);
+			json = handleResponse(response);
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return json;
+	}
+	
+	private JSONObject handleResponse(HttpResponse response) {
+		JSONObject json = null;
+		
+		Log.e("alen", "code:" + response.getStatusLine().getStatusCode());
+		try {
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+				HttpEntity entity = response.getEntity();
+				String entityString = EntityUtils.toString(entity);
+				Log.e("alen", new String(entityString.getBytes("iso-8859-1"),"UTF-8"));
+		//		String jsonString = entityString.substring(entityString.indexOf("{"));
+		//		Log.e("alen", jsonString);
+				json = new JSONObject(entityString);
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		
+		return json;
+	}
+}

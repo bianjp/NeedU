@@ -1,19 +1,10 @@
 package com.example.needu;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -22,7 +13,9 @@ import android.os.Handler;
 import android.os.Message;
 import android.app.Activity;
 import android.content.Intent;
-import android.util.Log;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -31,7 +24,7 @@ import android.widget.RadioButton;
 import android.widget.Toast;
 
 public class RegisterActivity extends Activity {
-	public String serverUrl = GlobalData.SERVER + "/user";
+	public String serverUrl = Network.SERVER + "/user";
 	
 	private EditText registerName;
 	private EditText registerSchoolYear;
@@ -97,16 +90,13 @@ public class RegisterActivity extends Activity {
 	}
 	
 	private void handleRegister() {
-		String username = registerUsername.getText().toString();
-		String password = registerPassword.getText().toString();
-		String passwordAgain = registerPasswordConfirm.getText().toString();
-		if (username.length() == 0) {
+		if (TextUtils.isEmpty(registerUsername.getText())) {
 			Toast.makeText(this, "学号不能为空", Toast.LENGTH_SHORT).show();
-		} else if (password.length() == 0) {
+		} else if (TextUtils.isEmpty(registerPassword.getText())) {
 			Toast.makeText(this, "密码不能为空", Toast.LENGTH_SHORT).show();
-		} else if (passwordAgain.length() == 0) {
+		} else if (TextUtils.isEmpty(registerPasswordConfirm.getText())) {
 			Toast.makeText(this, "确认密码不能为空", Toast.LENGTH_SHORT).show();
-		} else if (!password.equals(passwordAgain)) {
+		} else if (!TextUtils.equals(registerPassword.getText(), registerPasswordConfirm.getText())) {
 			Toast.makeText(this, "密码和确认密码不相同", Toast.LENGTH_SHORT).show();
 		} else if (!registerCheckBox.isChecked()) {
 			Toast.makeText(this, "请确认服务条款", Toast.LENGTH_SHORT).show();
@@ -121,19 +111,6 @@ public class RegisterActivity extends Activity {
 			@Override
 			public void run() {
 				List<NameValuePair> params = new ArrayList<NameValuePair>();
-				/* for test
-				params.add(new BasicNameValuePair("username", "31331281"));
-				params.add(new BasicNameValuePair("password", "zhoujielun"));
-				params.add(new BasicNameValuePair("school", "software"));
-				params.add(new BasicNameValuePair("major", "software"));
-				params.add(new BasicNameValuePair("schoolYear", "2011"));
-				params.add(new BasicNameValuePair("name", "alen"));
-				params.add(new BasicNameValuePair("birthday", "1992"));
-				params.add(new BasicNameValuePair("gender", "male"));
-				params.add(new BasicNameValuePair("phone", "668"));
-				params.add(new BasicNameValuePair("wechat", "alen"));
-				params.add(new BasicNameValuePair("QQ", "304"));
-				*/
 				params.add(new BasicNameValuePair("username", registerUsername.getText().toString()));
 				params.add(new BasicNameValuePair("password", registerPassword.getText().toString()));
 				params.add(new BasicNameValuePair("school", registerSchool.getText().toString()));
@@ -151,25 +128,9 @@ public class RegisterActivity extends Activity {
 					params.add(new BasicNameValuePair("gender", "female"));
 				}
 				
-				HttpClient client = new DefaultHttpClient();
-				HttpPost post = new HttpPost(serverUrl);
-				HttpResponse response = null;
-				try {
-					post.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
-					response = client.execute(post);
-					Log.e("alen", "code:" + response.getStatusLine().getStatusCode());
-					if (response.getStatusLine().getStatusCode() == 200) {
-						HttpEntity entity = response.getEntity();
-						String entityString = EntityUtils.toString(entity);
-						Log.e("alen", new String(entityString.getBytes("iso-8859-1"),"UTF-8"));
-				//		String jsonString = entityString.substring(entityString.indexOf("{"));
-				//		Log.e("alen", jsonString);
-						JSONObject json = new JSONObject(entityString);
-						sendMessage(GlobalData.MSG_OK, json);
-					}
-				} catch (Exception e) {
-					// TODO: handle exception
-				}
+				Network network = new Network();
+				JSONObject json = network.post(serverUrl, params);
+				sendMessage(Network.MSG_OK, json);
 			}
 		}).start();
 	}
@@ -177,7 +138,7 @@ public class RegisterActivity extends Activity {
 	private Handler mHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
-			case GlobalData.MSG_OK:
+			case Network.MSG_OK:
 				JSONObject json = (JSONObject)msg.obj;
 				handleRegisterResult(json);
 				break;
@@ -190,31 +151,20 @@ public class RegisterActivity extends Activity {
 	
 	private void handleRegisterResult(JSONObject json) {
 		int resultStatus = -3;
+		
 		try {
 			resultStatus = json.getInt("status");
-		} catch (JSONException e) {
-			// TODO 自动生成的 catch 块
-			e.printStackTrace();
-		}
-		
-		switch (resultStatus) {
-		case 0:
-			onRegisterSuccess(json);
-			break;
+			switch (resultStatus) {
+			case 0:
+				onRegisterSuccess(json);
+				break;
 
-		// TODO
-		
-		default:
-			try {
+			default:
 				Toast.makeText(this, new String(json.getString("message").getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
-			} catch (JSONException e) {
-				// TODO 自动生成的 catch 块
-				e.printStackTrace();
-			} catch (UnsupportedEncodingException e) {
-				// TODO 自动生成的 catch 块
-				e.printStackTrace();
+				break;
 			}
-			break;
+		} catch (Exception e) {
+			// TODO: handle exception
 		}
 	}
 	
@@ -232,10 +182,13 @@ public class RegisterActivity extends Activity {
 			e.printStackTrace();
 		}
 		
-		// TODO
+		SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
+		Editor editor = cookies.edit();
+		editor.putString("sessionId", sessionId);
+		editor.putString("studentId", studentId);
+		editor.commit();
+		
 		Intent intent = new Intent(this, GroundActivity.class);
-		intent.putExtra("sessionId", sessionId);
-		intent.putExtra("studentId", studentId);
 		startActivity(intent);
 		finish();
 	}
@@ -246,5 +199,4 @@ public class RegisterActivity extends Activity {
 		msg.obj = obj;
 		mHandler.sendMessage(msg);
 	}
-
 }

@@ -15,17 +15,11 @@ public class PersonalAnnounceActivity extends Activity {
 	private Button interestButton;
 	private Button newNeedButton;
 	
-	private String sessionId;
-	private String studentId;
-	
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_personal_announce);
 	
 		initViews();
-		
-		sessionId = getIntent().getStringExtra("sessionId");
-		studentId = getIntent().getStringExtra("studentId");
 	}
 	
 	private void initViews()
@@ -51,14 +45,11 @@ public class PersonalAnnounceActivity extends Activity {
 		public void onClick(View arg0) {
 			if (arg0.getId() == R.id.newNeedButton) {
 				Intent intent = new Intent(PersonalAnnounceActivity.this, NewNeedActivity.class);
-				intent.putExtra("sessionId", sessionId);
 				startActivity(intent);
 				return ;
 			}
 			
 			Intent intent = new Intent();
-			intent.putExtra("sessionId", sessionId);
-			intent.putExtra("studentId", studentId);
 			if (arg0.getId() == R.id.personalDataButton) {
 				intent.setClass(PersonalAnnounceActivity.this, PersonalDataActivity.class);
 			} else if (arg0.getId() == R.id.commentButton) {

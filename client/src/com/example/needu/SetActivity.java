@@ -3,7 +3,6 @@ package com.example.needu;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -19,18 +18,12 @@ public class SetActivity extends Activity {
 	private Button squareButton;
 	private Button personalButton;
 	
-	private String sessionId;
-	private String studentId;
-	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_set);
 		
 		initViews();
-		
-		sessionId = getIntent().getStringExtra("sessionId");
-		studentId = getIntent().getStringExtra("studentId");
 	}
 	
 	private void initViews() {
@@ -63,8 +56,6 @@ public class SetActivity extends Activity {
 			}
 			
 			Intent intent = new Intent();
-			intent.putExtra("sessionId", sessionId);
-			intent.putExtra("studentId", studentId);
 			if (arg0.getId() == R.id.changePassword) {
 				intent.setClass(SetActivity.this, ChangePasswordActivity.class);
 				startActivity(intent);

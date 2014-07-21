@@ -1,20 +1,10 @@
 package com.example.needu;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.os.Bundle;
@@ -22,7 +12,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.app.ActionBar;
 import android.app.Activity;
-import android.util.Log;
+import android.content.SharedPreferences;
+import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -30,7 +21,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 public class ChangePasswordActivity extends Activity {
-	public String serverUrl = GlobalData.SERVER + "/user/password";
+	public String serverUrl = Network.SERVER + "/user/password";
 
 	private EditText oldcodeEditText;
 	private EditText newcodeEditText;
@@ -38,8 +29,6 @@ public class ChangePasswordActivity extends Activity {
 	
 	private Button completeButton;
 	private Button cancelButton;
-
-	private String sessionId;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -50,8 +39,6 @@ public class ChangePasswordActivity extends Activity {
 	    actionBar.setDisplayHomeAsUpEnabled(true);
 
 		initViews();
-		
-		sessionId = getIntent().getStringExtra("sessionId");
 	}
 
 	
@@ -79,16 +66,13 @@ public class ChangePasswordActivity extends Activity {
 	}
 	
 	private void handleChange() {
-		String oldCode = oldcodeEditText.getText().toString();
-		String newCode = newcodeEditText.getText().toString();
-		String ensureCode = ensurecodeEditText.getText().toString();
-		if (oldCode.length() == 0) {
+		if (TextUtils.isEmpty(oldcodeEditText.getText())) {
 			Toast.makeText(this, "旧密码不能为空", Toast.LENGTH_SHORT).show();
-		} else if (newCode.length() == 0) {
+		} else if (TextUtils.isEmpty(newcodeEditText.getText())) {
 			Toast.makeText(this, "新密码不能为空", Toast.LENGTH_SHORT).show();
-		} else if (ensureCode.length() == 0) {
+		} else if (TextUtils.isEmpty(ensurecodeEditText.getText())) {
 			Toast.makeText(this, "确认密码不能为空", Toast.LENGTH_SHORT).show();
-		} else if (!newCode.equals(ensureCode)) {
+		} else if (!TextUtils.equals(newcodeEditText.getText(), ensurecodeEditText.getText())) {
 			Toast.makeText(this, "新密码和确认密码不相同", Toast.LENGTH_SHORT).show();
 		} else {
 			change();
@@ -104,26 +88,13 @@ public class ChangePasswordActivity extends Activity {
 				params.add(new BasicNameValuePair("oldPassword", oldcodeEditText.getText().toString()));
 				params.add(new BasicNameValuePair("password", newcodeEditText.getText().toString()));
 				
+				SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
+				String sessionId = cookies.getString("sessionId", "");
+				
 				serverUrl = serverUrl + "?sid=" + sessionId;
-				HttpClient client = new DefaultHttpClient();
-				HttpPut put = new HttpPut(serverUrl);
-				HttpResponse response = null;
-				try {
-					put.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
-					response = client.execute(put);
-					Log.e("alen", "code:" + response.getStatusLine().getStatusCode());
-					if (response.getStatusLine().getStatusCode() == 200) {
-						HttpEntity entity = response.getEntity();
-						String entityString = EntityUtils.toString(entity);
-						Log.e("alen", new String(entityString.getBytes("iso-8859-1"),"UTF-8"));
-				//		String jsonString = entityString.substring(entityString.indexOf("{"));
-				//		Log.e("alen", jsonString);
-						JSONObject json = new JSONObject(entityString);
-						sendMessage(GlobalData.MSG_OK, json);
-					}
-				} catch (Exception e) {
-					// TODO: handle exception
-				}
+				Network network = new Network();
+				JSONObject json = network.put(serverUrl, params);
+				sendMessage(Network.MSG_OK, json);
 			}
 		}).start();
 	}
@@ -131,7 +102,7 @@ public class ChangePasswordActivity extends Activity {
 	private Handler mHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
-			case GlobalData.MSG_OK:
+			case Network.MSG_OK:
 				JSONObject json = (JSONObject)msg.obj;
 				handleChangeResult(json);
 				break;
@@ -144,35 +115,25 @@ public class ChangePasswordActivity extends Activity {
 	
 	private void handleChangeResult(JSONObject json) {
 		int resultStatus = -3;
+		
 		try {
 			resultStatus = json.getInt("status");
-		} catch (JSONException e) {
-			// TODO 自动生成的 catch 块
-			e.printStackTrace();
-		}
-		
-		switch (resultStatus) {
-		case 0:
-			onChangeSuccess(json);
-			break;
+			switch (resultStatus) {
+			case 0:
+				onChangeSuccess(json);
+				break;
 
-		default:
-			try {
+			default:
 				Toast.makeText(this, new String(json.getString("message").getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
-			} catch (JSONException e) {
-				// TODO 自动生成的 catch 块
-				e.printStackTrace();
-			} catch (UnsupportedEncodingException e) {
-				// TODO 自动生成的 catch 块
-				e.printStackTrace();
+				break;
 			}
-			break;
+		} catch (Exception e) {
+			// TODO: handle exception
 		}
 	}
 	
 	private void onChangeSuccess(JSONObject json) {
 		Toast.makeText(this, "修改密码成功", Toast.LENGTH_SHORT).show();
-
 		finish();
 	}
 	

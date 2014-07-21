@@ -58,5 +58,6 @@
     <string name="title_activity_new_need">个人</string>
     <string name="title_activity_ground">NeedU</string>
     <string name="title_activity_rank">广场</string>
+    <string name="title_activity_need_detail">NeedU</string>
 
 </resources>

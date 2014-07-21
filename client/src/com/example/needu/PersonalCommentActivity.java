@@ -14,17 +14,11 @@ public class PersonalCommentActivity extends Activity {
 	private Button announceButton;
 	private Button interestButton;
 	
-	private String sessionId;
-	private String studentId;
-	
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_personal_comment);
 	
 		initViews();
-		
-		sessionId = getIntent().getStringExtra("sessionId");
-		studentId = getIntent().getStringExtra("studentId");
 	}
 	
 	private void initViews()
@@ -47,8 +41,6 @@ public class PersonalCommentActivity extends Activity {
 		@Override
 		public void onClick(View arg0) {
 			Intent intent = new Intent();
-			intent.putExtra("sessionId", sessionId);
-			intent.putExtra("studentId", studentId);
 			if (arg0.getId() == R.id.personalDataButton) {
 				intent.setClass(PersonalCommentActivity.this, PersonalDataActivity.class);
 			} else if (arg0.getId() == R.id.announceButton) {
