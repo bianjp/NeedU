@@ -28,7 +28,6 @@ public class GroundActivity extends Activity {
 	
 	private EditText inputEditText;
 	private Button searchButton;
-	private Button rankButton;
 	private Button personalButton;
 	private Button setButton;
 	private Button moreButton;
@@ -51,14 +50,12 @@ public class GroundActivity extends Activity {
 	{
 		inputEditText = (EditText)findViewById(R.id.inputEditText);
 		searchButton = (Button)findViewById(R.id.searchButton);
-		rankButton = (Button)findViewById(R.id.rankButton);
 		personalButton = (Button)findViewById(R.id.personalButton);
 		setButton = (Button)findViewById(R.id.setButton);
 		moreButton = (Button)findViewById(R.id.moreButton);
 		contentLayout = (LinearLayout)findViewById(R.id.content);
 		
 		searchButton.setOnClickListener(listener);
-		rankButton.setOnClickListener(listener);
 		personalButton.setOnClickListener(listener);
 		setButton.setOnClickListener(listener);
 		moreButton.setOnClickListener(listener);
@@ -100,10 +97,6 @@ public class GroundActivity extends Activity {
 					moreButton.setVisibility(View.GONE);
 					getLatestNeeds(NUM_PER_PAGE, offset, tags);
 				}
-				return ;
-			} else if (arg0.getId() == R.id.rankButton) {
-				Intent intent = new Intent(GroundActivity.this, RankActivity.class);
-				startActivity(intent);
 				return ;
 			} else if (arg0.getId() == R.id.moreButton) {
 				getLatestNeeds(NUM_PER_PAGE, offset, tags);

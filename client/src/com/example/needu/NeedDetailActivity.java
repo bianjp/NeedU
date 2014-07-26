@@ -1,8 +1,10 @@
 package com.example.needu;
 
+import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -22,9 +24,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,7 +32,7 @@ public class NeedDetailActivity extends Activity {
 	private String getUserUrl = Network.SERVER + "/user/";
 	private String postCommentUrl = Network.SERVER + "/comment/help/";
 	private static final int MSG_GET_HELP = 201;
-	private static final int MSG_GET_USER = 202;
+	private static final int MSG_GET_COMMENT = 202;
 	private static final int MSG_POST_COMMENT = 203;
 	private String helpId;
 	private String sessionId;
@@ -41,7 +40,7 @@ public class NeedDetailActivity extends Activity {
 	private TextView nameTextView;
 	private TextView dateTextView;
 	private TextView newsTextView;
-	private LinearLayout commentLayout;
+//	private LinearLayout commentLayout;
 	private EditText commentEditText;
 	private Button commentButton;
 
@@ -56,7 +55,7 @@ public class NeedDetailActivity extends Activity {
 		
 		initViews();
 		
-		getDetail(getHelpUrl + helpId, MSG_GET_HELP);
+		getHelp(getHelpUrl + helpId);
 	}
 	
 	private void initViews()
@@ -64,7 +63,7 @@ public class NeedDetailActivity extends Activity {
 		nameTextView = (TextView)findViewById(R.id.nameText);
 		dateTextView = (TextView)findViewById(R.id.dateText);
 		newsTextView = (TextView)findViewById(R.id.newsText);
-		commentLayout = (LinearLayout)findViewById(R.id.commentLayout);
+//		commentLayout = (LinearLayout)findViewById(R.id.commentLayout);
 		commentEditText = (EditText)findViewById(R.id.commentEditText);
 		commentButton = (Button)findViewById(R.id.commentButton);
 		
@@ -77,7 +76,7 @@ public class NeedDetailActivity extends Activity {
 		});
 	}
 	
-	private void getDetail(final String serverUrl, final int msg) {
+	private void getHelp(final String serverUrl) {
 		new Thread(new Runnable() {
 			
 			@Override
@@ -86,7 +85,23 @@ public class NeedDetailActivity extends Activity {
 				Log.e("alen", tmpUrl);
 				Network network = new Network();
 				JSONObject json = network.get(tmpUrl);
-				sendMessage(msg, json);
+				Help help = handleHelpJSON(json);
+				sendMessage(MSG_GET_HELP, help);
+			}
+		}).start();
+	}
+	
+	private void getComment(final String serverUrl) {
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				String tmpUrl = serverUrl + "?sid=" + sessionId;
+				Log.e("alen", tmpUrl);
+				Network network = new Network();
+				JSONObject json = network.get(tmpUrl);
+				ArrayList<HashMap<String, Object>> commentList = handleCommentJSON(json);
+				sendMessage(MSG_GET_COMMENT, commentList);
 			}
 		}).start();
 	}
@@ -113,10 +128,16 @@ public class NeedDetailActivity extends Activity {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 			case MSG_GET_HELP:
-			case MSG_GET_USER:
+				Help help = (Help)msg.obj;
+				updateHelpUI(help);
+				break;
+				
+			case MSG_GET_COMMENT:
+				ArrayList<HashMap<String, Object>> commentList = (ArrayList<HashMap<String, Object>>)msg.obj;
+				updateCommentUI(commentList);
+				break;
+				
 			case MSG_POST_COMMENT:
-				JSONObject json = (JSONObject)msg.obj;
-				handleResult(json, msg.what);
 				break;
 
 			default:
@@ -125,6 +146,79 @@ public class NeedDetailActivity extends Activity {
 		}
 	};
 	
+	private Help handleHelpJSON(JSONObject json) {
+		int resultStatus = -3;
+		Help help = new Help();
+		try {
+			resultStatus = json.getInt("status");
+			switch (resultStatus) {
+			case 0:
+				getComment(getHelpUrl + helpId + "/comments");
+				
+				help.status = true;
+				JSONObject helpJson = json.getJSONObject("help");
+				
+				String createdBy = helpJson.getString("createdBy");
+				help.name = getUsername(createdBy);
+				String createdAt = helpJson.getString("createdAt");
+				help.time = convertDate(createdAt);
+				
+				help.title = helpJson.getString("title");
+				help.content = helpJson.getString("content");
+				JSONArray tagsArray = helpJson.getJSONArray("tags");
+				String tags = tagsArray.optString(0);
+				for (int i = 1; i < tagsArray.length(); i++) {
+					tags = tags + ';' + tagsArray.optString(i);
+				}
+				help.tags = tags;
+				
+				break;
+
+			default:
+				help.status = false;
+				help.msg = json.getString("msg");
+				break;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		
+		return help;
+	}
+	
+	private ArrayList<HashMap<String, Object>> handleCommentJSON(JSONObject json) {
+		int resultStatus = -3;
+		ArrayList<HashMap<String, Object>> commentList = new ArrayList<HashMap<String,Object>>();
+		try {
+			resultStatus = json.getInt("status");
+			switch (resultStatus) {
+			case 0:
+				JSONArray commentArray = json.getJSONArray("comments");
+				for (int i = 0; i < commentArray.length(); i++) {
+					JSONObject commentJson = commentArray.optJSONObject(i);
+					HashMap<String, Object> comment = new HashMap<String, Object>();
+					
+					String createdBy = commentJson.getString("createdBy");
+					comment.put("name", getUsername(createdBy));
+					String createdAt = commentJson.getString("createdAt");
+					comment.put("date", convertDate(createdAt));
+					String content = commentJson.getString("content");
+					comment.put("content", content);
+					
+					commentList.add(comment);
+				}
+				break;
+
+			default:
+				// TODO
+				break;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return commentList;
+	}
+/*	
 	private void handleResult(JSONObject json, int msg) {
 		int resultStatus = -3;
 		try {
@@ -157,7 +251,28 @@ public class NeedDetailActivity extends Activity {
 			// TODO: handle exception
 		}
 	}
+*/
 	
+	private void updateHelpUI(Help help) {
+		if (help.status) {
+			nameTextView.setText(help.name);
+			dateTextView.setText(help.time);
+			newsTextView.setText("标题：" + help.title + "\n" + help.content + "\n" + "标签：" + help.tags);
+		} else {
+			try {
+				Toast.makeText(this, new String(help.msg.getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private void updateCommentUI(ArrayList<HashMap<String, Object>> commentList) {
+		Log.e("alen", commentList.toString());
+	}
+	
+/*	
 	private void onNeedDetailSuccess(JSONObject json) {
 		try {
 			JSONObject help = json.getJSONObject("help");
@@ -171,7 +286,12 @@ public class NeedDetailActivity extends Activity {
 				tags = tags + ';' + tagsArray.optString(i);
 			}
 			
-			getDetail(getUserUrl + createdBy, MSG_GET_USER);
+			getHelp(getUserUrl + createdBy, MSG_GET_USER);
+//			String tmpUrl = getUserUrl + createdBy + "?sid=" + sessionId;
+//			Log.e("alen", tmpUrl);
+//			Network network = new Network();
+//			JSONObject json2 = network.get(tmpUrl);
+//			Log.e("alen", json2.toString());
 			
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK);
 			sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -212,6 +332,37 @@ public class NeedDetailActivity extends Activity {
 			e.printStackTrace();
 		}
 	}
+*/
+	
+	private String getUsername(String id) {
+		String username = null;
+		try {
+			String tmpUrl = getUserUrl + id + "?sid=" + sessionId;
+			Log.e("alen", tmpUrl);
+			Network network = new Network();
+			JSONObject userJson = network.get(tmpUrl);
+			JSONObject profile = userJson.getJSONObject("profile");
+			username = profile.getString("name");
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return username;
+	}
+	
+	private String convertDate(String date) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK);
+		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+		SimpleDateFormat output = new SimpleDateFormat("MM-dd HH:mm", Locale.CHINA);
+		output.setTimeZone(TimeZone.getTimeZone("PRC"));
+		String shortDate = null;
+		try {
+			shortDate = output.format(sdf.parse(date));
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return shortDate;
+	}
 	
 	private void onUserDetailSuccess(JSONObject json) {
 		try {
@@ -234,5 +385,24 @@ public class NeedDetailActivity extends Activity {
 		msg.what = what;
 		msg.obj = obj;
 		mHandler.sendMessage(msg);
+	}
+	
+	private class Help {
+		public Boolean status;
+		public String msg;
+		public String name;
+		public String time;
+		public String title;
+		public String content;
+		public String tags;
+		public String commentCount;
+	}
+	
+	private class Comment {
+		public Boolean status;
+		public String msg;
+		public String name;
+		public String time;
+		public String content;
 	}
 }

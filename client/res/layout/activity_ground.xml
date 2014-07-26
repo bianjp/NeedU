@@ -19,7 +19,7 @@
 
          <EditText
         	android:id="@+id/inputEditText"
-        	android:layout_width="150dp"
+        	android:layout_width="220dp"
         	android:layout_height="35dp"
         	android:paddingLeft="5dp"
         	android:singleLine="true"
@@ -35,13 +35,7 @@
         	android:layout_marginLeft="10dp"
         	android:textSize="13sp" 
         	android:text="搜索" />
-    	<Button
-        	android:id="@+id/rankButton"
-        	android:layout_width="60dp"
-        	android:layout_height="35dp"
-        	android:layout_marginLeft="10dp"
-        	android:textSize="13sp" 
-        	android:text="排行" />
+
 	</LinearLayout>
 
      <ScrollView
