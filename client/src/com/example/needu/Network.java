@@ -16,10 +16,13 @@ import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.util.Log;
 
 public class Network {
-	public static final String SERVER = "http://222.200.181.217:3000/api";
+	public static final String SERVER = "http://192.168.22.1:3000/api";
 	public static final int MSG_OK = 200;
 	
 	private HttpClient client = new DefaultHttpClient();
@@ -42,7 +45,9 @@ public class Network {
 		HttpResponse response = null;
 		JSONObject json = null;
 		try {
-			post.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
+			if (params != null) {
+				post.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
+			}
 			response = client.execute(post);
 			json = handleResponse(response);
 		} catch (Exception e) {
@@ -83,5 +88,16 @@ public class Network {
 		}
 		
 		return json;
+	}
+	
+	public static boolean isNetworkConnected(Context context) { 
+		if (context != null) {
+			ConnectivityManager mConnectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+			NetworkInfo mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
+			if (mNetworkInfo != null) {
+				return mNetworkInfo.isAvailable();
+			}
+		}
+		return false;
 	}
 }

@@ -21,7 +21,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 public class ChangePasswordActivity extends Activity {
-	public String serverUrl = Network.SERVER + "/user/password";
+	private String serverUrl = Network.SERVER + "/user/password";
 
 	private EditText oldcodeEditText;
 	private EditText newcodeEditText;
@@ -40,7 +40,6 @@ public class ChangePasswordActivity extends Activity {
 
 		initViews();
 	}
-
 	
 	private void initViews()
 	{

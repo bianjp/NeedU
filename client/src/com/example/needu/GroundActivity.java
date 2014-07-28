@@ -14,6 +14,8 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -23,8 +25,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class GroundActivity extends Activity {
-	public String serverUrl = Network.SERVER + "/helps/latest";
+	private String getNotificationsUrl = Network.SERVER + "/notifications";
+	private String getLatestUrl = Network.SERVER + "/helps/latest";
+	private String getConcernsUrl = Network.SERVER + "/helps/concerns";
+	private static final int MSG_GET_HELPS = 201;
+	private static final int MSG_GET_NOTIFICATIONS = 202;
 	private static final int NUM_PER_PAGE = 20;
+	private String sessionId;
+	private boolean viewAll = true;
 	
 	private EditText inputEditText;
 	private Button searchButton;
@@ -41,11 +49,14 @@ public class GroundActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_ground);
 		
+		SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
+		sessionId = cookies.getString("sessionId", "");
+		
 		initViews();
 		
-		getLatestNeeds(NUM_PER_PAGE, offset, tags);
+		getLatestNeeds(NUM_PER_PAGE, 0, "");
 	}
-	
+
 	private void initViews()
 	{
 		inputEditText = (EditText)findViewById(R.id.inputEditText);
@@ -69,7 +80,7 @@ public class GroundActivity extends Activity {
 					tags = "";
 					contentLayout.removeAllViews();
 					moreButton.setVisibility(View.GONE);
-					getLatestNeeds(NUM_PER_PAGE, offset, tags);
+					getLatestNeeds(NUM_PER_PAGE, 0, "");
 				}
 			}
 			
@@ -95,7 +106,7 @@ public class GroundActivity extends Activity {
 					tags = inputEditText.getText().toString();
 					contentLayout.removeAllViews();
 					moreButton.setVisibility(View.GONE);
-					getLatestNeeds(NUM_PER_PAGE, offset, tags);
+					getLatestNeeds(NUM_PER_PAGE, 0, tags);
 				}
 				return ;
 			} else if (arg0.getId() == R.id.moreButton) {
@@ -119,11 +130,22 @@ public class GroundActivity extends Activity {
 			
 			@Override
 			public void run() {
-				SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
-				String sessionId = cookies.getString("sessionId", "");
-				
-				String tmpServerUrl = serverUrl + "?sid=" + sessionId
+				String tmpServerUrl = getLatestUrl + "?sid=" + sessionId
 						+ "&limit=" + Integer.toString(limit + 1) + "&offset=" + Integer.toString(offset) + "&tags=" + tags;
+				Log.e("alen", tmpServerUrl);
+				Network network = new Network();
+				JSONObject json = network.get(tmpServerUrl);
+				sendMessage(Network.MSG_OK, json);
+			}
+		}).start();
+	}
+	
+	private void getConcernNeeds() {
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				String tmpServerUrl = getConcernsUrl + "?sid=" + sessionId;
 				Log.e("alen", tmpServerUrl);
 				Network network = new Network();
 				JSONObject json = network.get(tmpServerUrl);
@@ -148,7 +170,6 @@ public class GroundActivity extends Activity {
 	
 	private void handleLatestNeedsResult(JSONObject json) {
 		int resultStatus = -3;
-		
 		try {
 			resultStatus = json.getInt("status");
 			switch (resultStatus) {
@@ -222,7 +243,7 @@ public class GroundActivity extends Activity {
 				JSONObject help2 = jsonArray.optJSONObject(i + 1);
 				final String helpId2 = help2.getString("_id");
 				String title2 = help2.getString("title");
-				JSONArray tagsArray2 = help1.getJSONArray("tags");
+				JSONArray tagsArray2 = help2.getJSONArray("tags");
 				String tags2 = tagsArray2.optString(0);
 				for (int j = 1; j < tagsArray2.length(); j++) {
 					tags2 = tags2 + ';' + tagsArray2.optString(j);
@@ -260,5 +281,37 @@ public class GroundActivity extends Activity {
 		msg.what = what;
 		msg.obj = obj;
 		mHandler.sendMessage(msg);
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.ground, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+		int id = item.getItemId();
+		if (id == R.id.action_all && !viewAll) {
+			viewAll = true;
+			searchButton.setClickable(true);
+			offset = 0;
+			tags = "";
+			contentLayout.removeAllViews();
+			moreButton.setVisibility(View.GONE);
+			getLatestNeeds(NUM_PER_PAGE, 0, "");
+		} else if (id == R.id.action_concern && viewAll) {
+			viewAll = false;
+			searchButton.setClickable(false);
+			contentLayout.removeAllViews();
+			moreButton.setVisibility(View.GONE);
+			getConcernNeeds();
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
 	}
 }

@@ -5,7 +5,7 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="11"
+        android:minSdkVersion="14"
         android:targetSdkVersion="19" />
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -21,6 +21,7 @@
             android:label="@string/title_activity_logo" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -93,6 +94,14 @@
             android:name=".NeedDetailActivity"
             android:label="@string/title_activity_need_detail"
             android:windowSoftInputMode="stateHidden" >
+        </activity>
+        <activity
+            android:name=".OtherPersonActivity"
+            android:label="@string/title_activity_other_person" >
+        </activity>
+        <activity
+            android:name=".ModifyInfoActivity"
+            android:label="@string/title_activity_modify_info" >
         </activity>
     </application>
 

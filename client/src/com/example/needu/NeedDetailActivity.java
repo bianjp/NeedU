@@ -12,10 +12,10 @@ import java.util.TimeZone;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,6 +24,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,10 +40,12 @@ public class NeedDetailActivity extends Activity {
 	private String helpId;
 	private String sessionId;
 	
+	private ImageView protraitImageView;
 	private TextView nameTextView;
 	private TextView dateTextView;
 	private TextView newsTextView;
-//	private LinearLayout commentLayout;
+	private TextView countTextView;
+	private ListView commentListView;
 	private EditText commentEditText;
 	private Button commentButton;
 
@@ -55,15 +60,17 @@ public class NeedDetailActivity extends Activity {
 		
 		initViews();
 		
-		getHelp(getHelpUrl + helpId);
+		getHelp();
 	}
 	
 	private void initViews()
 	{
+		protraitImageView = (ImageView)findViewById(R.id.protrait);
 		nameTextView = (TextView)findViewById(R.id.nameText);
 		dateTextView = (TextView)findViewById(R.id.dateText);
 		newsTextView = (TextView)findViewById(R.id.newsText);
-//		commentLayout = (LinearLayout)findViewById(R.id.commentLayout);
+		countTextView = (TextView)findViewById(R.id.countText);
+		commentListView = (ListView)findViewById(R.id.commentList);
 		commentEditText = (EditText)findViewById(R.id.commentEditText);
 		commentButton = (Button)findViewById(R.id.commentButton);
 		
@@ -76,12 +83,12 @@ public class NeedDetailActivity extends Activity {
 		});
 	}
 	
-	private void getHelp(final String serverUrl) {
+	private void getHelp() {
 		new Thread(new Runnable() {
 			
 			@Override
 			public void run() {
-				String tmpUrl = serverUrl + "?sid=" + sessionId;
+				String tmpUrl = getHelpUrl + helpId + "?sid=" + sessionId;
 				Log.e("alen", tmpUrl);
 				Network network = new Network();
 				JSONObject json = network.get(tmpUrl);
@@ -91,12 +98,12 @@ public class NeedDetailActivity extends Activity {
 		}).start();
 	}
 	
-	private void getComment(final String serverUrl) {
+	private void getComment() {
 		new Thread(new Runnable() {
 			
 			@Override
 			public void run() {
-				String tmpUrl = serverUrl + "?sid=" + sessionId;
+				String tmpUrl = getHelpUrl + helpId + "/comments?sid=" + sessionId;
 				Log.e("alen", tmpUrl);
 				Network network = new Network();
 				JSONObject json = network.get(tmpUrl);
@@ -119,7 +126,7 @@ public class NeedDetailActivity extends Activity {
 				
 				Network network = new Network();
 				JSONObject json = network.post(tmpUrl, params);
-				sendMessage(Network.MSG_OK, json);
+				sendMessage(MSG_POST_COMMENT, json);
 			}
 		}).start();
 	}
@@ -138,6 +145,8 @@ public class NeedDetailActivity extends Activity {
 				break;
 				
 			case MSG_POST_COMMENT:
+				JSONObject json = (JSONObject)msg.obj;
+				handleCommentResult(json);
 				break;
 
 			default:
@@ -153,13 +162,13 @@ public class NeedDetailActivity extends Activity {
 			resultStatus = json.getInt("status");
 			switch (resultStatus) {
 			case 0:
-				getComment(getHelpUrl + helpId + "/comments");
+				getComment();
 				
 				help.status = true;
 				JSONObject helpJson = json.getJSONObject("help");
 				
-				String createdBy = helpJson.getString("createdBy");
-				help.name = getUsername(createdBy);
+				help.createdBy = helpJson.getString("createdBy");
+				help.name = getUsername(help.createdBy);
 				String createdAt = helpJson.getString("createdAt");
 				help.time = convertDate(createdAt);
 				
@@ -172,6 +181,7 @@ public class NeedDetailActivity extends Activity {
 				}
 				help.tags = tags;
 				
+				help.commentCount = helpJson.getInt("commentCount");
 				break;
 
 			default:
@@ -184,6 +194,27 @@ public class NeedDetailActivity extends Activity {
 		}
 		
 		return help;
+	}
+	
+	private String handleUserJSON(JSONObject json) {
+		int resultStatus = -3;
+		String username = "";
+		try {
+			resultStatus = json.getInt("status");
+			switch (resultStatus) {
+			case 0:
+				JSONObject profile = json.getJSONObject("profile");
+				username = profile.getString("name");
+				break;
+
+			default:
+				// TODO
+				break;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return username;
 	}
 	
 	private ArrayList<HashMap<String, Object>> handleCommentJSON(JSONObject json) {
@@ -218,29 +249,14 @@ public class NeedDetailActivity extends Activity {
 		}
 		return commentList;
 	}
-/*	
-	private void handleResult(JSONObject json, int msg) {
+	
+	private void handleCommentResult(JSONObject json) {
 		int resultStatus = -3;
 		try {
 			resultStatus = json.getInt("status");
 			switch (resultStatus) {
 			case 0:
-				switch (msg) {
-				case MSG_GET_HELP:
-					onNeedDetailSuccess(json);
-					break;
-
-				case MSG_GET_USER:
-					onUserDetailSuccess(json);
-					break;
-				
-				case MSG_POST_COMMENT:
-					onCommentSuccess(json);
-					break;
-				
-				default:
-					break;
-				}
+				onCommentSuccess(json);
 				break;
 
 			default:
@@ -251,13 +267,23 @@ public class NeedDetailActivity extends Activity {
 			// TODO: handle exception
 		}
 	}
-*/
 	
-	private void updateHelpUI(Help help) {
+	private void updateHelpUI(final Help help) {
 		if (help.status) {
 			nameTextView.setText(help.name);
 			dateTextView.setText(help.time);
 			newsTextView.setText("标题：" + help.title + "\n" + help.content + "\n" + "标签：" + help.tags);
+			countTextView.setText("评论：" + help.commentCount);
+			
+			protraitImageView.setOnClickListener(new View.OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					Intent intent = new Intent(NeedDetailActivity.this, OtherPersonActivity.class);
+					intent.putExtra("userId", help.createdBy);
+					startActivity(intent);
+				}
+			});
 		} else {
 			try {
 				Toast.makeText(this, new String(help.msg.getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
@@ -269,70 +295,10 @@ public class NeedDetailActivity extends Activity {
 	}
 	
 	private void updateCommentUI(ArrayList<HashMap<String, Object>> commentList) {
-		Log.e("alen", commentList.toString());
+		SimpleAdapter adapter = new SimpleAdapter(this, commentList, R.layout.comment,
+				new String[]{"name", "date", "content"}, new int[]{R.id.name, R.id.date, R.id.content});
+		commentListView.setAdapter(adapter);
 	}
-	
-/*	
-	private void onNeedDetailSuccess(JSONObject json) {
-		try {
-			JSONObject help = json.getJSONObject("help");
-			String createdAt = help.getString("createdAt");
-			String createdBy = help.getString("createdBy");
-			String title = help.getString("title");
-			String content = help.getString("content");
-			JSONArray tagsArray = help.getJSONArray("tags");
-			String tags = tagsArray.optString(0);
-			for (int i = 1; i < tagsArray.length(); i++) {
-				tags = tags + ';' + tagsArray.optString(i);
-			}
-			
-			getHelp(getUserUrl + createdBy, MSG_GET_USER);
-//			String tmpUrl = getUserUrl + createdBy + "?sid=" + sessionId;
-//			Log.e("alen", tmpUrl);
-//			Network network = new Network();
-//			JSONObject json2 = network.get(tmpUrl);
-//			Log.e("alen", json2.toString());
-			
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK);
-			sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-			SimpleDateFormat output = new SimpleDateFormat("MM-dd HH:mm", Locale.CHINA);
-			output.setTimeZone(TimeZone.getTimeZone("PRC"));
-			String time = output.format(sdf.parse(createdAt));
-			
-			dateTextView.setText(time);
-			newsTextView.setText("标题：" + title + "\n" + content + "\n" + "标签：" + tags);
-			
-			JSONArray commentArray = json.getJSONArray("comments");
-			for (int i = 0; i < commentArray.length(); i++) {
-				RelativeLayout commentBar = new RelativeLayout(this);
-				RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-				commentBar.setLayoutParams(params);
-				commentLayout.addView(commentBar);
-				
-				ImageView imageView = new ImageView(this);
-				RelativeLayout.LayoutParams params1 = new RelativeLayout.LayoutParams(DensityUtil.dip2px(this, 43), DensityUtil.dip2px(this, 43));
-				params1.setMargins(DensityUtil.dip2px(this, 10), 0, 0, 0);
-				imageView.setLayoutParams(params1);
-				imageView.setImageResource(R.drawable.ic_launcher);
-				commentBar.addView(imageView);
-				
-				
-				
-				JSONObject comment = commentArray.optJSONObject(i);
-				String at = comment.getString("createdAt");
-				String by = comment.getString("createdBy");
-				String cont = comment.getString("content");
-				
-			}
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-*/
 	
 	private String getUsername(String id) {
 		String username = null;
@@ -341,8 +307,7 @@ public class NeedDetailActivity extends Activity {
 			Log.e("alen", tmpUrl);
 			Network network = new Network();
 			JSONObject userJson = network.get(tmpUrl);
-			JSONObject profile = userJson.getJSONObject("profile");
-			username = profile.getString("name");
+			username = handleUserJSON(userJson);
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
@@ -364,20 +329,11 @@ public class NeedDetailActivity extends Activity {
 		return shortDate;
 	}
 	
-	private void onUserDetailSuccess(JSONObject json) {
-		try {
-			JSONObject profile = json.getJSONObject("profile");
-			String name = profile.getString("name");
-			nameTextView.setText(name);
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
 	private void onCommentSuccess(JSONObject json) {
 		commentEditText.setText("");
 		Toast.makeText(this, "评论成功", Toast.LENGTH_SHORT).show();	
+		
+		getHelp();
 	}
 	
 	private void sendMessage(int what, Object obj) {
@@ -390,19 +346,12 @@ public class NeedDetailActivity extends Activity {
 	private class Help {
 		public Boolean status;
 		public String msg;
+		public String createdBy;
 		public String name;
 		public String time;
 		public String title;
 		public String content;
 		public String tags;
-		public String commentCount;
-	}
-	
-	private class Comment {
-		public Boolean status;
-		public String msg;
-		public String name;
-		public String time;
-		public String content;
+		public int commentCount;
 	}
 }

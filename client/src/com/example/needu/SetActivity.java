@@ -3,12 +3,15 @@ package com.example.needu;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.Toast;
 
 public class SetActivity extends Activity {
+	private Button changeInfoButton;
 	private Button changePasswordButton;
 	private Button versionUpdateButton;
 	private Button messageTipsButton;
@@ -27,6 +30,7 @@ public class SetActivity extends Activity {
 	}
 	
 	private void initViews() {
+		changeInfoButton = (Button)findViewById(R.id.changeInfo);
 		changePasswordButton = (Button)findViewById(R.id.changePassword);
 		versionUpdateButton = (Button)findViewById(R.id.versionUpdate);
 		messageTipsButton = (Button)findViewById(R.id.messageTips);
@@ -36,6 +40,7 @@ public class SetActivity extends Activity {
 		squareButton = (Button)findViewById(R.id.squareButton);
 		personalButton = (Button)findViewById(R.id.personalButton);
 		
+		changeInfoButton.setOnClickListener(listener);
 		changePasswordButton.setOnClickListener(listener);
 		versionUpdateButton.setOnClickListener(listener);
 		messageTipsButton.setOnClickListener(listener);
@@ -56,7 +61,10 @@ public class SetActivity extends Activity {
 			}
 			
 			Intent intent = new Intent();
-			if (arg0.getId() == R.id.changePassword) {
+			if (arg0.getId() == R.id.changeInfo) {
+				intent.setClass(SetActivity.this, ModifyInfoActivity.class);
+				startActivity(intent);
+			} else if (arg0.getId() == R.id.changePassword) {
 				intent.setClass(SetActivity.this, ChangePasswordActivity.class);
 				startActivity(intent);
 			} else if (arg0.getId() == R.id.messageTips) {
@@ -66,7 +74,11 @@ public class SetActivity extends Activity {
 				intent.setClass(SetActivity.this, AboutActivity.class);
 				startActivity(intent);
 			} else if (arg0.getId() == R.id.exit) {
-				// TODO
+				SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
+				Editor editor = cookies.edit();
+				editor.remove("sessionId");
+				editor.commit();
+				
 				intent.setClass(SetActivity.this, LoginActivity.class);
 				startActivity(intent);
 				finish();

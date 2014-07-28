@@ -10,7 +10,7 @@
       android:layout_height="wrap_content" >
 
      <ImageView
-         android:id="@+id/imageView1"
+         android:id="@+id/protrait"
          android:layout_width="50dp"
          android:layout_height="50dp"
          android:layout_marginLeft="10dp"
@@ -41,12 +41,23 @@
          android:padding="5dp"
          android:background="@drawable/bg_edittext_normal" />
      
+     <TextView
+         android:id="@+id/countText"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_below="@id/newsText"
+         android:layout_marginTop="5dp"
+         android:layout_marginLeft="10dp"
+         android:text="评论：" />
+     
   </RelativeLayout>
-
+  
   <ListView
+      android:id="@+id/commentList"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-	  android:layout_below="@id/needDetailLayout" >
+	  android:layout_below="@id/needDetailLayout"
+	  android:paddingBottom="35dp" >
   </ListView>
 
   <RelativeLayout
@@ -58,6 +69,7 @@
          android:id="@+id/commentEditText"
          android:layout_width="250dp"
          android:layout_height="35dp"
+         android:paddingLeft="5dp"
          android:background="@drawable/bg_edittext_normal"
          android:hint="评论…"
          android:textSize="15sp" />

@@ -75,7 +75,6 @@
 		    android:layout_alignParentLeft="true"
 		    android:layout_alignParentRight="true"
 		    android:padding="5dp"
-		    android:text=""
 		    android:inputType="textMultiLine"
 		    android:gravity="left|top"
 		    android:background="@drawable/bg_edittext_normal">

@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.widget.Toast;
 
 public class LogoActivity extends Activity {
 
@@ -25,7 +26,10 @@ public class LogoActivity extends Activity {
 			@Override
 			public void run() {
 				Intent intent = new Intent();
-				if (TextUtils.isEmpty(sessionId)) {
+				if (!Network.isNetworkConnected(LogoActivity.this)) {
+					Toast.makeText(LogoActivity.this, "网络没有连接，请查看网络设置", Toast.LENGTH_SHORT).show();
+					intent.setClass(LogoActivity.this, LoginActivity.class);
+				} else if (TextUtils.isEmpty(sessionId)) {
 					intent.setClass(LogoActivity.this, LoginActivity.class);
 				} else {
 					intent.setClass(LogoActivity.this, GroundActivity.class);

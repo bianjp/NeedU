@@ -24,7 +24,7 @@ import android.widget.RadioButton;
 import android.widget.Toast;
 
 public class RegisterActivity extends Activity {
-	public String serverUrl = Network.SERVER + "/user";
+	private String serverUrl = Network.SERVER + "/user";
 	
 	private EditText registerName;
 	private EditText registerSchoolYear;

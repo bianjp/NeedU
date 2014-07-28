@@ -4,20 +4,27 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class PersonalDataActivity extends Activity {
-	private String serverUrl = Network.SERVER + "/user/";
+public class OtherPersonActivity extends Activity {
+	private String getInfoUrl = Network.SERVER + "/user/";
+	private String followUrl = Network.SERVER + "/concern/";
+	private String userId;
+	private String sessionId;
+	private static final int MSG_GET_INFO = 201;
+	private static final int MSG_FOLLOW = 202;
+	
+	private TextView nameText;
+	private TextView collegeText;
+	private Button followButton;
 	
 	private TextView descriptionText;
 	private TextView schoolText;
@@ -29,25 +36,25 @@ public class PersonalDataActivity extends Activity {
 	private TextView phoneText;
 	private TextView wechatText;
 	private TextView qqText;
-	
-	private Button squareButton;
-	private Button setButton;
-	private Button announceButton;
-	private Button commentButton;
-	private Button interestButton;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_personal_data);
+		setContentView(R.layout.activity_other_person);
 		
+		SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
+		sessionId = cookies.getString("sessionId", "");
+		userId = getIntent().getStringExtra("userId");
 		initViews();
-		
 		getPersonalData();
 	}
 	
 	private void initViews()
 	{
+		nameText = (TextView)findViewById(R.id.name);
+		collegeText = (TextView)findViewById(R.id.college);
+		followButton = (Button)findViewById(R.id.follow);
+		
 		descriptionText = (TextView)findViewById(R.id.personal_description);
 		name2Text = (TextView)findViewById(R.id.name2);
 		schoolText = (TextView)findViewById(R.id.school);
@@ -59,54 +66,39 @@ public class PersonalDataActivity extends Activity {
 		qqText = (TextView)findViewById(R.id.QQ);
 		wechatText = (TextView)findViewById(R.id.wechat);
 		
-		squareButton = (Button)findViewById(R.id.squareButton);
-		setButton = (Button)findViewById(R.id.setButton);
-		announceButton = (Button)findViewById(R.id.announceButton);
-		commentButton = (Button)findViewById(R.id.commentButton);
-		interestButton = (Button)findViewById(R.id.interestButton);
-		
-		squareButton.setOnClickListener(listener);
-		setButton.setOnClickListener(listener);
-		announceButton.setOnClickListener(listener);
-		commentButton.setOnClickListener(listener);
-		interestButton.setOnClickListener(listener);
-	}
-	
-	private OnClickListener listener = new OnClickListener() {
-		
-		@Override
-		public void onClick(View arg0) {
-			Intent intent = new Intent();
-			if (arg0.getId() == R.id.announceButton) {
-				intent.setClass(PersonalDataActivity.this, PersonalAnnounceActivity.class);
-			} else if (arg0.getId() == R.id.commentButton) {
-				intent.setClass(PersonalDataActivity.this, PersonalCommentActivity.class);
-			} else if (arg0.getId() == R.id.interestButton) {
-				intent.setClass(PersonalDataActivity.this, PersonalInterestActivity.class);
-			} else if (arg0.getId() == R.id.squareButton) {
-				intent.setClass(PersonalDataActivity.this, GroundActivity.class);
-			} else if (arg0.getId() == R.id.setButton) {
-				intent.setClass(PersonalDataActivity.this, SetActivity.class);
+		followButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				follow();
 			}
-			startActivity(intent);
-			finish();
-		}
-	};
+		});
+	}
 	
 	private void getPersonalData() {
 		new Thread(new Runnable() {
 			
 			@Override
 			public void run() {
-				SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
-				String sessionId = cookies.getString("sessionId", "");
-				String studentId = cookies.getString("studentId", "");
-				
-				serverUrl = serverUrl + studentId + "?sid=" + sessionId;
-				Log.e("alen", serverUrl);
+				String url = getInfoUrl + userId + "?sid=" + sessionId;
+				Log.e("alen", url);
 				Network network = new Network();
-				JSONObject json = network.get(serverUrl);
-				sendMessage(Network.MSG_OK, json);
+				JSONObject json = network.get(url);
+				sendMessage(MSG_GET_INFO, json);
+			}
+		}).start();
+	}
+	
+	private void follow() {
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				String url = followUrl + userId + "?sid=" + sessionId;
+				Log.e("alen", url);
+				Network network = new Network();
+				JSONObject json = network.post(url, null);
+				sendMessage(MSG_FOLLOW, json);
 			}
 		}).start();
 	}
@@ -114,11 +106,15 @@ public class PersonalDataActivity extends Activity {
 	private Handler mHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
-			case Network.MSG_OK:
+			case MSG_GET_INFO:
 				JSONObject json = (JSONObject)msg.obj;
 				handleGetResult(json);
 				break;
 
+			case MSG_FOLLOW:
+				JSONObject json2 = (JSONObject)msg.obj;
+				handleFollowResult(json2);
+				break;
 			default:
 				break;
 			}
@@ -143,9 +139,29 @@ public class PersonalDataActivity extends Activity {
 		}
 	}
 	
+	private void handleFollowResult(JSONObject json) {
+		int resultStatus = -3;
+		try {
+			resultStatus = json.getInt("status");
+			switch (resultStatus) {
+			case 0:
+				onFollowSuccess(json);
+				break;
+
+			default:
+				Toast.makeText(this, new String(json.getString("message").getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
+				break;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+	
 	private void onGetSuccess(JSONObject json) {
 		try {
 			JSONObject profile = json.getJSONObject("profile");
+			nameText.append(profile.getString("name").equals("null")?"未填写":profile.getString("name"));
+			collegeText.append(profile.getString("school").equals("null")?"未填写":profile.getString("school"));
 			descriptionText.append(profile.getString("description").equals("null")?"未填写":profile.getString("description"));
 			name2Text.append(profile.getString("name").equals("null")?"未填写":profile.getString("name"));
 			schoolText.append(profile.getString("school").equals("null")?"未填写":profile.getString("school"));
@@ -160,8 +176,11 @@ public class PersonalDataActivity extends Activity {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		// TODO
+	}
+	
+	private void onFollowSuccess(JSONObject json) {
+		followButton.setText("取消关注");
+		Toast.makeText(this, "关注成功", Toast.LENGTH_SHORT).show();
 	}
 	
 	private void sendMessage(int what, Object obj) {

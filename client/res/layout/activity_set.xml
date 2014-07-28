@@ -22,42 +22,50 @@
         android:textSize="20sp" />
     
     <Button
+        android:id="@+id/changeInfo"
+        android:layout_width="200dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="40dp"
+        android:layout_marginLeft="50dp"
+        android:text="修改信息" />
+    
+    <Button
         android:id="@+id/changePassword"
         android:layout_width="200dp"
         android:layout_height="45dp"
-        android:layout_marginTop="55dp"
+        android:layout_marginTop="95dp"
         android:layout_marginLeft="50dp"
         android:text="修改密码" />
     
-    <Button
-        android:id="@+id/versionUpdate"
-        android:layout_width="200dp"
-        android:layout_height="45dp"
-        android:layout_marginTop="110dp"
-        android:layout_marginLeft="50dp"
-        android:text="版本更新" />
-    
      <Button
-        android:id="@+id/messageTips"
+        android:id="@+id/versionUpdate"
        android:layout_width="200dp"
         android:layout_height="45dp"
-        android:layout_marginTop="165dp"
+        android:layout_marginTop="150dp"
+        android:layout_marginLeft="50dp"
+        android:text="版本更新" />
+
+    <Button
+        android:id="@+id/messageTips"
+        android:layout_width="200dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="205dp"
         android:layout_marginLeft="50dp"
         android:text="消息提示" />
 
-    <Button
+   <Button
         android:id="@+id/aboutNeedU"
-        android:layout_width="200dp"
+         android:layout_width="200dp"
         android:layout_height="45dp"
-        android:layout_marginTop="220dp"
+        android:layout_marginTop="260dp"
         android:layout_marginLeft="50dp"
         android:text="关于NeedU" />
-
+   
    <Button
         android:id="@+id/exit"
          android:layout_width="200dp"
         android:layout_height="45dp"
-        android:layout_marginTop="275dp"
+        android:layout_marginTop="315dp"
         android:layout_marginLeft="50dp"
         android:text="退出登录" />
    </RelativeLayout>

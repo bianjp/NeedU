@@ -30,7 +30,7 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
 public class NewNeedActivity extends Activity {
-	public String serverUrl = Network.SERVER + "/help";
+	private String serverUrl = Network.SERVER + "/help";
 	
 	private EditText titleEditText;
 	private EditText tagEditText;

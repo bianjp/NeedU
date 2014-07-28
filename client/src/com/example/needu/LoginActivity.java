@@ -8,13 +8,10 @@ import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -39,22 +36,7 @@ public class LoginActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_login);
 		
-		if (!isNetworkConnected(this)) {
-			Toast.makeText(LoginActivity.this, "网络没有连接，请查看网络设置", Toast.LENGTH_SHORT).show();
-		}
-		
 		initViews();
-	}
-	
-	public boolean isNetworkConnected(Context context) { 
-		if (context != null) {
-			ConnectivityManager mConnectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-			NetworkInfo mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
-			if (mNetworkInfo != null) {
-				return mNetworkInfo.isAvailable();
-			}
-		}
-		return false;
 	}
 	
 	private void initViews() {
