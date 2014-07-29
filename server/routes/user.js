@@ -3,6 +3,7 @@ var router = express.Router();
 var async = require('async');
 var crypto = require('crypto');
 var ObjectID = require('mongodb').ObjectID;
+var _ = require('underscore');
 
 var generateSalt = function(){
   return crypto.randomBytes(10).toString('hex');
@@ -187,7 +188,7 @@ router.post('/user/authentication', function(req, res){
       col.findOne({username: req.body.username}, callback);
     }
   ], function(err, item){
-      if (err || !item || 
+      if (err || !item ||
           encryptPassword(req.body.password, item.password.salt) != item.password.identity){
         res.send({
           status: 1,
@@ -254,10 +255,14 @@ router.get('/user/:userId', function(req, res){
         });
       }
       else {
+        var concernedBy = _.map(item.concernedBy, function(id){
+          return id.toString();
+        });
         item.profile._id = item._id;
         res.send({
           status: 0,
-          profile: item.profile
+          profile: item.profile,
+          concerned: concernedBy.indexOf(req.session.userId.toString()) != -1
         });
       }
   });
