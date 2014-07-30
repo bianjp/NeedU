@@ -92,7 +92,7 @@ var insertComment = function(req, res, comment){
         status: 0,
         comment: items[0]
       });
-      
+
       modifyCommentCount(req.db, comment.helpId, 1);
 
       notification.informNewComment(req.db, items[0]);
@@ -116,13 +116,20 @@ router.post('/comment/help/:helpId', function(req, res){
     return;
   }
 
+  if (!req.body.content || !req.body.content.trim()){
+    res.send({
+      status: 1,
+      message: '评论不能为空'
+    });
+  }
+
   var comment = {
     createdAt: new Date(),
     createdBy: req.session.userId,
     helpId: helpId,
     commentId: null,
     replyTo: null,
-    content: req.body.content,
+    content: req.body.content.trim(),
     secret: !!parseInt(req.body.secret),
     thanked: false
   };
