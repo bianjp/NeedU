@@ -411,4 +411,103 @@ router.get('/helps/commented', function(req, res){
   });
 });
 
+var upDown = function(req, res, operation){
+  var helpId;
+  try{
+    helpId = ObjectID(req.params.helpId);
+  }
+  catch(e){
+    res.send({
+      status: 1,
+      message: '参数错误'
+    });
+    return;
+  }
+
+  var helps;
+  async.waterfall([
+    function(callback){
+      req.db.collection('helps', callback);
+    },
+
+    function(col, callback){
+      col.findOne({_id: helpId}, callback);
+      helps = col;
+    },
+
+    function(item, callback){
+      if (!item){
+        res.send({
+          status: 2,
+          message: '请求操作的对象不存在'
+        });
+      }
+      else {
+        var up = item.up.map(function(id){
+          return id.toString();
+        });
+        var down = item.down.map(function(id){
+          return id.toString();
+        });
+        var userId = req.session.userId.toString();
+        if (up.indexOf(userId) == -1 && down.indexOf(userId) == -1){
+          callback();
+        }
+        else {
+          var message;
+          if (up.indexOf(userId) != -1){
+            if (operation == 'up'){
+              message = '已顶，不能重复操作';
+            }
+            else {
+              message = '已顶，不能踩';
+            }
+          }
+          else {
+            if (operation == 'up'){
+              message = '已踩，不能顶';
+            }
+            else {
+              message = '已踩，不能重复操作';
+            }
+          }
+
+          res.send({
+            status: 5,
+            message: message
+          });
+        }
+      }
+    },
+
+    function(callback){
+      var update = { $addToSet: {} };
+      update.$addToSet[operation] = req.session.userId;
+      helps.update({_id: helpId}, update, callback);
+    }
+  ],
+
+  function(err, result){
+    if (err){
+      res.send({
+        status: 3,
+        message: '操作失败'
+      });
+    }
+    else {
+      res.send({
+        status: 0
+      });
+    }
+  });
+};
+
+router.put('/help/:helpId/up', function(req, res){
+  upDown(req, res, 'up');
+});
+
+router.put('/help/:helpId/down', function(req, res){
+  upDown(req, res, 'down');
+});
+
 module.exports = router;
