@@ -1,5 +1,6 @@
 package com.example.needu;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,23 +10,34 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 public class ModifyInfoActivity extends Activity {
 	private String serverUrl = Network.SERVER + "/user";
+	private String uploadUrl = Network.SERVER + "/user/photo";
 	private static final int MSG_GET_INFO = 201;
 	private static final int MSG_PUT_INFO = 202;
+	private static final int MSG_PUT_PHOTO = 203;
 	private String sessionId;
 	private String studentId;
 	private String sex;
+	private String picPath;
 	
 	private EditText nameEditText;
 	private EditText schoolYearEditText;
@@ -37,6 +49,8 @@ public class ModifyInfoActivity extends Activity {
 	private EditText wechatEditText;
 	private EditText descriptionEditText;
 
+	private ImageView photo;
+	private Button addButton;
 	private Button finishButton;
 
 	@Override
@@ -49,7 +63,6 @@ public class ModifyInfoActivity extends Activity {
 		studentId = cookies.getString("studentId", "");
 		
 		initViews();
-		
 		getInfo();
 	}
 	
@@ -63,6 +76,18 @@ public class ModifyInfoActivity extends Activity {
 		qqEditText = (EditText)findViewById(R.id.qqEditText);
 		wechatEditText = (EditText)findViewById(R.id.wechatEditText);
 		descriptionEditText = (EditText)findViewById(R.id.descriptionEditText);
+		
+		photo = (ImageView)findViewById(R.id.uploadPhoto);
+		addButton = (Button)findViewById(R.id.uploadPhotoButton);
+		addButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(Intent.ACTION_PICK, null);
+				intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+				startActivityForResult(intent, 1);
+			}
+		});
 		
 		finishButton = (Button)findViewById(R.id.finishButton);
 		finishButton.setOnClickListener(new View.OnClickListener() {
@@ -114,6 +139,28 @@ public class ModifyInfoActivity extends Activity {
 		}).start();
 	}
 	
+	private void putPhoto() {
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				File file = new File(picPath); 
+
+				if(file!=null)
+				{ 
+					String entityString = UploadUtil.uploadFile( file, uploadUrl + "?sid=" + sessionId); 
+					try {
+						JSONObject json = new JSONObject(entityString);
+						sendMessage(MSG_PUT_PHOTO, json);
+					} catch (JSONException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} 
+			}
+		}).start();
+	}
+	
 	private Handler mHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
@@ -127,6 +174,10 @@ public class ModifyInfoActivity extends Activity {
 				handlePutResult(json2);
 				break;
 
+			case MSG_PUT_PHOTO:
+				JSONObject json3 = (JSONObject)msg.obj;
+				handlePhotoResult(json3);
+				break;
 			default:
 				break;
 			}
@@ -169,6 +220,24 @@ public class ModifyInfoActivity extends Activity {
 		}
 	}
 	
+	private void handlePhotoResult(JSONObject json) {
+		int resultStatus = -3;
+		try {
+			resultStatus = json.getInt("status");
+			switch (resultStatus) {
+			case 0:
+				onPhotoSuccess(json);
+				break;
+
+			default:
+				Toast.makeText(this, new String(json.getString("message").getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
+				break;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+	
 	private void onGetSuccess(JSONObject json) {
 		try {
 			JSONObject profile = json.getJSONObject("profile");
@@ -189,6 +258,10 @@ public class ModifyInfoActivity extends Activity {
 	}
 	
 	private void onPutSuccess(JSONObject json) {
+		putPhoto();
+	}
+	
+	private void onPhotoSuccess(JSONObject json) {
 		Toast.makeText(this, "修改成功", Toast.LENGTH_SHORT).show();
 		finish();
 	}
@@ -198,5 +271,43 @@ public class ModifyInfoActivity extends Activity {
 		msg.what = what;
 		msg.obj = obj;
 		mHandler.sendMessage(msg);
+	}
+	
+	protected void onActivityResult(int requestCode, int resultCode, Intent data){
+		if (requestCode == 1 && data != null){
+			setPicToView(data);
+		}
+		super.onActivityResult(requestCode, resultCode, data);
+	}
+	
+	private void setPicToView(Intent picdata){
+		Uri uri = picdata.getData();
+		
+		try { 
+			String[] pojo = {MediaStore.Images.Media.DATA}; 
+
+			Cursor cursor = managedQuery(uri, pojo, null, null,null); 
+			if(cursor!=null) 
+			{ 
+				ContentResolver cr = this.getContentResolver(); 
+				int colunm_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA); 
+				cursor.moveToFirst(); 
+				String path = cursor.getString(colunm_index); 
+
+				/*** 
+				* 这里加这样一个判断主要是为了第三方的软件选择，比如：使用第三方的文件管理器的话，你选择的文件就不一定是图片了，这样的话，我们判断文件的后缀名 
+
+				* 如果是图片格式的话，那么才可以 
+				*/
+
+				if(path.endsWith("jpg")||path.endsWith("png")) 
+				{
+					picPath = path; 
+					Bitmap bitmap = BitmapFactory.decodeStream(cr.openInputStream(uri)); 
+					photo.setImageBitmap(bitmap);
+				}
+			}
+		} catch (Exception e) { 
+		}
 	}
 }

@@ -1,16 +1,23 @@
 package com.example.needu;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,10 +27,12 @@ public class OtherPersonActivity extends Activity {
 	private String userId;
 	private String sessionId;
 	private static final int MSG_GET_INFO = 201;
-	private static final int MSG_FOLLOW = 202;
-	private static final int MSG_CANCEL = 203;
+	private static final int MSG_GET_PHOTO = 202;
+	private static final int MSG_FOLLOW = 203;
+	private static final int MSG_CANCEL = 204;
 	private boolean concerned;
 	
+	private ImageView headpic;
 	private TextView nameText;
 	private TextView collegeText;
 	private Button followButton;
@@ -53,6 +62,7 @@ public class OtherPersonActivity extends Activity {
 	
 	private void initViews()
 	{
+		headpic = (ImageView)findViewById(R.id.headpic);
 		nameText = (TextView)findViewById(R.id.name);
 		collegeText = (TextView)findViewById(R.id.college);
 		followButton = (Button)findViewById(R.id.follow);
@@ -79,6 +89,29 @@ public class OtherPersonActivity extends Activity {
 				Network network = new Network();
 				JSONObject json = network.get(url);
 				sendMessage(MSG_GET_INFO, json);
+			}
+		}).start();
+	}
+	
+	private void getPhoto(final String photoUrl) {
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				if (!photoUrl.equals("null")) {
+					try {
+						URL url = new URL(Network.HOST + photoUrl);
+						HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+						conn.setDoInput(true); 
+					    conn.connect(); 
+					    InputStream is = conn.getInputStream(); 
+					    Bitmap bitmap = BitmapFactory.decodeStream(is); 
+					    is.close();
+					    sendMessage(MSG_GET_PHOTO, bitmap);
+					} catch (Exception e) {
+						// TODO: handle exception
+					}
+				}
 			}
 		}).start();
 	}
@@ -119,6 +152,11 @@ public class OtherPersonActivity extends Activity {
 				handleGetResult(json);
 				break;
 
+			case MSG_GET_PHOTO:
+				Bitmap bitmap = (Bitmap)msg.obj;
+				headpic.setImageBitmap(bitmap);
+				break;
+				
 			case MSG_FOLLOW:
 				JSONObject json2 = (JSONObject)msg.obj;
 				handleFollowResult(json2);
@@ -203,6 +241,9 @@ public class OtherPersonActivity extends Activity {
 			phoneText.append(profile.getString("phone").equals("null")?"未填写":profile.getString("phone"));
 			qqText.append(profile.getString("QQ").equals("null")?"未填写":profile.getString("QQ"));
 			wechatText.append(profile.getString("wechat").equals("null")?"未填写":profile.getString("wechat"));
+			
+			String photoString = profile.getString("photo");
+			getPhoto(photoString);
 			
 			concerned = json.getBoolean("concerned");
 			if (concerned) {

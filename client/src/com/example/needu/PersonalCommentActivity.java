@@ -1,5 +1,8 @@
 package com.example.needu;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -13,10 +16,13 @@ import android.os.Message;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -25,10 +31,13 @@ import android.widget.AdapterView.OnItemClickListener;
 
 public class PersonalCommentActivity extends Activity {
 	private String serverUrl = Network.SERVER + "/helps/commented";
+	private static final int MSG_GET_PHOTO = 201;
 	private String sessionId;
 	private String name;
 	private String college;
+	private String photoUrl;
 	
+	private ImageView portrait;
 	private TextView nameText;
 	private TextView collegeText;
 	private Button squareButton;
@@ -44,15 +53,18 @@ public class PersonalCommentActivity extends Activity {
 	
 		SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
 		sessionId = cookies.getString("sessionId", "");
+		photoUrl = cookies.getString("photo", "");
 		name = cookies.getString("name", "");
 		college = cookies.getString("school", "");
 		
 		initViews();
+		getPhoto(photoUrl);
 		getCommentedHelps();
 	}
 	
 	private void initViews()
 	{
+		portrait = (ImageView)findViewById(R.id.headpic);
 		nameText = (TextView)findViewById(R.id.name);
 		collegeText = (TextView)findViewById(R.id.college);
 		nameText.append(name);
@@ -106,6 +118,29 @@ public class PersonalCommentActivity extends Activity {
 		}).start();
 	}
 	
+	private void getPhoto(final String photoUrl) {
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				if (!photoUrl.equals("null")) {
+					try {
+						URL url = new URL(Network.HOST + photoUrl);
+						HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+						conn.setDoInput(true); 
+					    conn.connect(); 
+					    InputStream is = conn.getInputStream(); 
+					    Bitmap bitmap = BitmapFactory.decodeStream(is); 
+					    is.close();
+					    sendMessage(MSG_GET_PHOTO, bitmap);
+					} catch (Exception e) {
+						// TODO: handle exception
+					}
+				}
+			}
+		}).start();
+	}
+	
 	private Handler mHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
@@ -114,6 +149,11 @@ public class PersonalCommentActivity extends Activity {
 				handleGetResult(json);
 				break;
 
+			case MSG_GET_PHOTO:
+				Bitmap bitmap = (Bitmap)msg.obj;
+				portrait.setImageBitmap(bitmap);
+				break;
+				
 			default:
 				break;
 			}

@@ -1,6 +1,9 @@
 package com.example.needu;
 
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,6 +20,8 @@ import org.json.JSONObject;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -27,6 +32,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.SimpleAdapter.ViewBinder;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -59,7 +65,6 @@ public class NeedDetailActivity extends Activity {
 		helpId = getIntent().getStringExtra("helpId");
 		
 		initViews();
-		
 		getHelp();
 	}
 	
@@ -169,6 +174,10 @@ public class NeedDetailActivity extends Activity {
 				
 				help.createdBy = helpJson.getString("createdBy");
 				help.name = getUsername(help.createdBy);
+				String photoUrl = getPhotoUrl(help.createdBy);
+				if (!photoUrl.equals("")) {
+					help.headpic = getPhoto(photoUrl);
+				}
 				String createdAt = helpJson.getString("createdAt");
 				help.time = convertDate(createdAt);
 				
@@ -217,6 +226,27 @@ public class NeedDetailActivity extends Activity {
 		return username;
 	}
 	
+	private String handleUserJSONForPhoto(JSONObject json) {
+		int resultStatus = -3;
+		String photo = "";
+		try {
+			resultStatus = json.getInt("status");
+			switch (resultStatus) {
+			case 0:
+				JSONObject profile = json.getJSONObject("profile");
+				photo = profile.getString("photo");
+				break;
+
+			default:
+				// TODO
+				break;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return photo;
+	}
+	
 	private ArrayList<HashMap<String, Object>> handleCommentJSON(JSONObject json) {
 		int resultStatus = -3;
 		ArrayList<HashMap<String, Object>> commentList = new ArrayList<HashMap<String,Object>>();
@@ -231,6 +261,13 @@ public class NeedDetailActivity extends Activity {
 					
 					String createdBy = commentJson.getString("createdBy");
 					comment.put("name", getUsername(createdBy));
+					String photoUrl = getPhotoUrl(createdBy);
+					if (!photoUrl.equals("null")) {
+						comment.put("image", getPhoto(photoUrl));
+					} else {
+						comment.put("image", R.drawable.ic_launcher);
+					}
+					
 					String createdAt = commentJson.getString("createdAt");
 					comment.put("date", convertDate(createdAt));
 					String content = commentJson.getString("content");
@@ -270,6 +307,9 @@ public class NeedDetailActivity extends Activity {
 	
 	private void updateHelpUI(final Help help) {
 		if (help.status) {
+			if (help.headpic != null) {
+				protraitImageView.setImageBitmap(help.headpic);
+			}
 			nameTextView.setText(help.name);
 			dateTextView.setText(help.time);
 			newsTextView.setText("标题：" + help.title + "\n" + help.content + "\n" + "标签：" + help.tags);
@@ -296,7 +336,18 @@ public class NeedDetailActivity extends Activity {
 	
 	private void updateCommentUI(ArrayList<HashMap<String, Object>> commentList) {
 		SimpleAdapter adapter = new SimpleAdapter(this, commentList, R.layout.comment,
-				new String[]{"name", "date", "content"}, new int[]{R.id.name, R.id.date, R.id.content});
+				new String[]{"name", "image", "date", "content"},
+				new int[]{R.id.name, R.id.image, R.id.date, R.id.content});
+		adapter.setViewBinder(new ViewBinder() {
+            public boolean setViewValue(View view, Object data, String textRepresentation) {
+                if (view instanceof ImageView && data instanceof Bitmap) {
+                    ImageView image = (ImageView) view;
+                    image.setImageBitmap((Bitmap) data);
+                    return true;
+                }
+                return false;
+            }
+        });
 		commentListView.setAdapter(adapter);
 	}
 	
@@ -312,6 +363,38 @@ public class NeedDetailActivity extends Activity {
 			// TODO: handle exception
 		}
 		return username;
+	}
+	
+	private String getPhotoUrl(String id) {
+		String photo = null;
+		try {
+			String tmpUrl = getUserUrl + id + "?sid=" + sessionId;
+			Log.e("alen", tmpUrl);
+			Network network = new Network();
+			JSONObject userJson = network.get(tmpUrl);
+			photo = handleUserJSONForPhoto(userJson);
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return photo;
+	}
+	
+	private Bitmap getPhoto(String photoUrl) {
+		Bitmap bitmap = null;
+		if (!photoUrl.equals("")) {
+			try {
+				URL url = new URL(Network.HOST + photoUrl);
+				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+				conn.setDoInput(true); 
+			    conn.connect(); 
+			    InputStream is = conn.getInputStream(); 
+			    bitmap = BitmapFactory.decodeStream(is); 
+			    is.close();
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+		}
+		return bitmap;
 	}
 	
 	private String convertDate(String date) {
@@ -346,6 +429,7 @@ public class NeedDetailActivity extends Activity {
 	private class Help {
 		public Boolean status;
 		public String msg;
+		public Bitmap headpic;
 		public String createdBy;
 		public String name;
 		public String time;

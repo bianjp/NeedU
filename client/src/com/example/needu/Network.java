@@ -23,7 +23,8 @@ import android.net.NetworkInfo;
 import android.util.Log;
 
 public class Network {
-	public static final String SERVER = "http://172.29.173.1:3000/api";
+	public static final String HOST = "http://172.29.173.1:3000";
+	public static final String SERVER = HOST + "/api";
 	public static final int MSG_OK = 200;
 	public static final int MSG_FAILED = 0;
 	

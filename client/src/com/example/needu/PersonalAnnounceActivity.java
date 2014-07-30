@@ -1,5 +1,8 @@
 package com.example.needu;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -16,12 +19,15 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -31,12 +37,15 @@ public class PersonalAnnounceActivity extends Activity {
 	private String getHelpUrl = Network.SERVER + "/helps/user/";
 	private String deleteHelpUrl = Network.SERVER + "/help/";
 	private static final int MSG_GET_HELP = 201;
-	private static final int MSG_DELETE_HELP = 202;
+	private static final int MSG_GET_PHOTO = 202;
+	private static final int MSG_DELETE_HELP = 203;
 	private String sessionId;
 	private String studentId;
 	private String name;
 	private String college;
+	private String photoUrl;
 	
+	private ImageView headpic;
 	private TextView nameText;
 	private TextView collegeText;
 	private Button squareButton;
@@ -54,15 +63,18 @@ public class PersonalAnnounceActivity extends Activity {
 		SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
 		sessionId = cookies.getString("sessionId", "");
 		studentId = cookies.getString("studentId", "");
+		photoUrl = cookies.getString("photo", "");
 		name = cookies.getString("name", "");
 		college = cookies.getString("school", "");
 		
 		initViews();
+		getPhoto(photoUrl);
 		getOwnHelps();
 	}
 	
 	private void initViews()
 	{
+		headpic = (ImageView)findViewById(R.id.headpic);
 		nameText = (TextView)findViewById(R.id.name);
 		collegeText = (TextView)findViewById(R.id.college);
 		nameText.append(name);
@@ -124,6 +136,29 @@ public class PersonalAnnounceActivity extends Activity {
 		}).start();
 	}
 	
+	private void getPhoto(final String photoUrl) {
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				if (!photoUrl.equals("null")) {
+					try {
+						URL url = new URL(Network.HOST + photoUrl);
+						HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+						conn.setDoInput(true); 
+					    conn.connect(); 
+					    InputStream is = conn.getInputStream(); 
+					    Bitmap bitmap = BitmapFactory.decodeStream(is); 
+					    is.close();
+					    sendMessage(MSG_GET_PHOTO, bitmap);
+					} catch (Exception e) {
+						// TODO: handle exception
+					}
+				}
+			}
+		}).start();
+	}
+	
 	private void deleteOwnHelp(final String helpId) {
 		new Thread(new Runnable() {
 			
@@ -143,6 +178,11 @@ public class PersonalAnnounceActivity extends Activity {
 			case MSG_GET_HELP:
 				JSONObject json = (JSONObject)msg.obj;
 				handleGetResult(json);
+				break;
+				
+			case MSG_GET_PHOTO:
+				Bitmap bitmap = (Bitmap)msg.obj;
+				headpic.setImageBitmap(bitmap);
 				break;
 			
 			case MSG_DELETE_HELP:

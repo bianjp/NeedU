@@ -88,7 +88,7 @@ public class NewNeedActivity extends Activity {
 	
 	//动态添加新的图片
 	private void setPicToView(Intent picdata){
-		Uri uri = picdata.getData();	
+		Uri uri = picdata.getData();
 		LinearLayout addImage = (LinearLayout)findViewById(R.id.addImageLayout);
 		ImageView imag = new ImageView(this);
 		imag.setImageURI(uri);

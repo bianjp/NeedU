@@ -1,11 +1,17 @@
 package com.example.needu;
 
-import org.json.JSONException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -13,12 +19,15 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class PersonalDataActivity extends Activity {
 	private String serverUrl = Network.SERVER + "/user/";
+	private static final int MSG_GET_PHOTO = 201;
 	
+	private ImageView portrait;
 	private TextView nameText;
 	private TextView collegeText;
 	private TextView descriptionText;
@@ -44,12 +53,12 @@ public class PersonalDataActivity extends Activity {
 		setContentView(R.layout.activity_personal_data);
 		
 		initViews();
-		
 		getPersonalData();
 	}
 	
 	private void initViews()
 	{
+		portrait = (ImageView)findViewById(R.id.headpic);
 		nameText = (TextView)findViewById(R.id.name);
 		collegeText = (TextView)findViewById(R.id.college);
 		descriptionText = (TextView)findViewById(R.id.personal_description);
@@ -115,12 +124,40 @@ public class PersonalDataActivity extends Activity {
 		}).start();
 	}
 	
+	private void getPhoto(final String photoUrl) {
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				if (!photoUrl.equals("null")) {
+					try {
+						URL url = new URL(Network.HOST + photoUrl);
+						HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+						conn.setDoInput(true); 
+					    conn.connect(); 
+					    InputStream is = conn.getInputStream(); 
+					    Bitmap bitmap = BitmapFactory.decodeStream(is); 
+					    is.close();
+					    sendMessage(MSG_GET_PHOTO, bitmap);
+					} catch (Exception e) {
+						// TODO: handle exception
+					}
+				}
+			}
+		}).start();
+	}
+	
 	private Handler mHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 			case Network.MSG_OK:
 				JSONObject json = (JSONObject)msg.obj;
 				handleGetResult(json);
+				break;
+				
+			case MSG_GET_PHOTO:
+				Bitmap bitmap = (Bitmap)msg.obj;
+				portrait.setImageBitmap(bitmap);
 				break;
 
 			default:
@@ -150,24 +187,30 @@ public class PersonalDataActivity extends Activity {
 	private void onGetSuccess(JSONObject json) {
 		try {
 			JSONObject profile = json.getJSONObject("profile");
-			nameText.append(profile.getString("name").equals("null")?"未填写":profile.getString("name"));
-			collegeText.append(profile.getString("school").equals("null")?"未填写":profile.getString("school"));
-			descriptionText.append(profile.getString("description").equals("null")?"未填写":profile.getString("description"));
-			name2Text.append(profile.getString("name").equals("null")?"未填写":profile.getString("name"));
-			schoolText.append(profile.getString("school").equals("null")?"未填写":profile.getString("school"));
-			majorText.append(profile.getString("major").equals("null")?"未填写":profile.getString("major"));
-			schoolYearText.append(profile.getString("schoolYear").equals("null")?"未填写":profile.getString("schoolYear"));
+			nameText.append(profile.getString("name").equals("")?"未填写":profile.getString("name"));
+			collegeText.append(profile.getString("school").equals("")?"未填写":profile.getString("school"));
+			descriptionText.append(profile.getString("description").equals("")?"未填写":profile.getString("description"));
+			name2Text.append(profile.getString("name").equals("")?"未填写":profile.getString("name"));
+			schoolText.append(profile.getString("school").equals("")?"未填写":profile.getString("school"));
+			majorText.append(profile.getString("major").equals("")?"未填写":profile.getString("major"));
+			schoolYearText.append(profile.getString("schoolYear").equals("")?"未填写":profile.getString("schoolYear"));
 			genderText.append(profile.getString("gender").equals("male")?"男":"女");
-			birthdayText.append(profile.getString("birthday").equals("null")?"未填写":profile.getString("birthday"));
-			phoneText.append(profile.getString("phone").equals("null")?"未填写":profile.getString("phone"));
-			qqText.append(profile.getString("QQ").equals("null")?"未填写":profile.getString("QQ"));
-			wechatText.append(profile.getString("wechat").equals("null")?"未填写":profile.getString("wechat"));
-		} catch (JSONException e) {
+			birthdayText.append(profile.getString("birthday").equals("")?"未填写":profile.getString("birthday"));
+			phoneText.append(profile.getString("phone").equals("")?"未填写":profile.getString("phone"));
+			qqText.append(profile.getString("QQ").equals("")?"未填写":profile.getString("QQ"));
+			wechatText.append(profile.getString("wechat").equals("")?"未填写":profile.getString("wechat"));
+			
+			String photoString = profile.getString("photo");
+			SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
+			Editor editor = cookies.edit();
+			editor.putString("photo", photoString);
+			editor.commit();
+			
+			getPhoto(photoString);
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		// TODO
 	}
 	
 	private void sendMessage(int what, Object obj) {
