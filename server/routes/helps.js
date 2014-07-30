@@ -5,6 +5,22 @@ var ObjectID = require('mongodb').ObjectID;
 var _ = require('underscore');
 var notification = require('../lib/notification');
 
+var validateHelp = function(help){
+  if (!help.title){
+    return '标题不能为空';
+  }
+  if (help.title.length > 30){
+    return '标题不能多于30个字';
+  }
+  if (!help.content || help.content.length < 10){
+    return '内容不能少于10个字';
+  }
+  if (help.content.length > 300){
+    return '内容不能多于300个字';
+  }
+  return false;
+};
+
 var getImages = function(files){
   if (!files){
     return [];
@@ -25,7 +41,14 @@ var getImages = function(files){
 // add a help
 router.post('/help', function(req, res){
 
-  // validate
+  var error = validateHelp(req.body);
+  if (error){
+    res.send({
+      status: 1,
+      message: error
+    });
+    return;
+  }
 
   var help = {
     createdAt: new Date(),
