@@ -93,6 +93,16 @@ $(function(){
 			url: '/helps/commented',
 			body: 'limit=\noffset='
 		},
+		upHelp: {
+			method: 'PUT',
+			url: '/help//up',
+			body: ''
+		},
+		downHelp: {
+			method: 'PUT',
+			url: '/help//down',
+			body: ''
+		},
 
 		getComment: {
 			method: 'GET',
