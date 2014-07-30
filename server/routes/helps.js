@@ -309,4 +309,86 @@ router.get('/helps/concerns', function(req, res){
   });
 });
 
+// get the helps I have commmented
+router.get('/helps/commented', function(req, res){
+  async.waterfall([
+    function(callback){
+      req.db.collection('comments', callback);
+    },
+
+    function(col, callback){
+      col.find({createdBy: req.session.userId}, {
+        sort: {
+          createdAt: -1
+        },
+        fields: {
+          helpId: 1
+        }
+      }).toArray(callback);
+    },
+
+    function(comments, callback){
+      if (!comments || !comments.length){
+        res.send({
+          status: 0,
+          helps: []
+        });
+      }
+      else{
+        var helpIds = _.map(comments, function(comment){
+          return comment.helpId.toString();
+        });
+        helpIds = _.uniq(helpIds);
+        var ids = _.map(helpIds, function(id){
+          return ObjectID(id);
+        });
+        var limit = parseInt(req.query.limit) || 10;
+        var skip  = parseInt(req.query.offset) || 0;
+        ids = ids.slice(skip, skip + limit);
+        var selector = {
+          _id: {
+            $in: ids
+          }
+        };
+        async.waterfall([
+          function(callback){
+            req.db.collection('helps', callback);
+          },
+
+          function(col, callback){
+            col.find(selector).toArray(callback);
+          }
+        ],
+
+        function(err, helps){
+          if (err){
+            callback(err);
+          }
+          else{
+            var sortedHelps = [];
+            for (var i in helps){
+              sortedHelps[helpIds.indexOf(helps[i]._id.toString())] = helps[i];
+            }
+            res.send({
+              status: 0,
+              helps: helps
+            });
+          }
+        });
+      }
+    },
+
+    function(callback){
+      getHelps(selector, options, req.db, res);
+    }
+  ],
+
+  function(err){
+    res.send({
+      status: 3,
+      message: '操作失败'
+    });
+  });
+});
+
 module.exports = router;

@@ -86,6 +86,11 @@ $(function(){
 			url: '/helps/concerns',
 			body: 'limit=\noffset='
 		},
+		getCommentedHelps: {
+			method: 'GET',
+			url: '/helps/commented',
+			body: 'limit=\noffset='
+		},
 
 		getComment: {
 			method: 'GET',

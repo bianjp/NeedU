@@ -9,20 +9,20 @@ html
     h1 NeedU服务器端测试
     div#fields
       div
-        span 方法: 
+        span 方法:
         select#method
           option(val='GET') GET
           option(val='POST') POST
           option(val='PUT') PUT
           option(val='DELETE') DELETE
       div
-        span URL: 
+        span URL:
         input#url(type='text', placeholder='/user')
       div
-        span SID: 
+        span SID:
         input#sid(type='text')
       div
-        span 请求体: 
+        span 请求体:
         textarea#body(rows='5', placeholder='username=abc')
         span#note 每个参数一行
       div.operations
@@ -50,6 +50,7 @@ html
         li(data-operation='getHelpsByUser') 获取某用户发布的求助
         li(data-operation='getLatestHelps') 获取最新求助
         li(data-operation='getConcernsHelps') 获取关注用户的求助
+        li(data-operation='getCommentedHelps') 获取评论过的求助
         li.separator
         li(data-operation='getComment') 获取指定评论
         li(data-operation='addComment') 发表/回复评论
