@@ -42,7 +42,7 @@ module.exports = function(grunt){
     express: {
       options: {
         port: 3000,
-        debug: true
+        debug: false
       },
       server: {
         options: {
@@ -90,7 +90,7 @@ module.exports = function(grunt){
   // 自定义任务
   // grunt.registerTask('default', ['clean', 'less', 'jshint:beforeConcat', 'concat', 'jshint:afterConcat', 'express', 'watch']);
   grunt.registerTask('default', ['jshint:beforeConcat', 'express', 'watch']);
-  
+
   grunt.registerTask('clearDatabase', 'Clear database...', function(){
     var db = require('./lib/db');
     var done = this.async();

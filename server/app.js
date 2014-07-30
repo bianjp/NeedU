@@ -79,10 +79,8 @@ db.getConnection(function(db) {
     }
   });
 
-  var debug = require('debug')('diandian-express');
-
   var server = app.listen(process.env.PORT || 3000, function() {
-    debug('Express server listening on port ' + server.address().port);
+    console.log('Express server listening on port ' + server.address().port);
   });
 
 });
