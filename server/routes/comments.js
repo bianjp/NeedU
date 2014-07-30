@@ -116,6 +116,20 @@ router.post('/comment/help/:helpId', function(req, res){
     return;
   }
 
+  var commentId;
+  if (!req.body.commentId){
+    try{
+      commentId = ObjectID(req.bdoy.commentId);
+    }
+    catch(e){
+      res.send({
+        status: 1,
+        message: '参数错误'
+      });
+      return;
+    }
+  }
+
   if (!req.body.content || !req.body.content.trim()){
     res.send({
       status: 1,
@@ -133,20 +147,11 @@ router.post('/comment/help/:helpId', function(req, res){
     secret: !!parseInt(req.body.secret),
     thanked: false
   };
-  if (!req.body.commentId){
+  if (!commentId){
     insertComment(req, res, comment);
   }
   else {
-    try{
-      comment.commentId = ObjectID(req.body.commentId);
-    }
-    catch(e){
-      res.send({
-        status: 1,
-        message: '参数错误'
-      });
-      return;
-    }
+    comment.commentId = commentId;
     async.waterfall([
       function(callback){
         req.db.collection('comments', callback);
