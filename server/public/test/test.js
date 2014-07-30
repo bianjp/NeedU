@@ -22,7 +22,8 @@ $(function(){
 		updatePhoto: {
 			method: 'PUT',
 			url: '/user/photo',
-			body: ''
+			body: '',
+			hasFile: true
 		},
 		updateProfile: {
 			method: 'PUT',
@@ -54,7 +55,8 @@ $(function(){
 		addHelp: {
 			method: 'POST',
 			url: '/help',
-			body: 'title=\ncontent=\ntags=\n'
+			body: 'title=\ncontent=\ntags=\n',
+			hasFile: true
 		},
 		removeHelp: {
 			method: 'DELETE',
@@ -135,6 +137,9 @@ $(function(){
 		$('#method').val(apis[operation].method);
 		$('#url').val(apis[operation].url);
 		$('#body').val(apis[operation].body);
+		if (!apis[operation].hasFile){
+			$('#files').val('');
+		}
 	});
 
 	$('#submit').on('click', function(){
@@ -145,7 +150,6 @@ $(function(){
 
 		var hasFile = (method == 'PUT' && url == '/user/photo') ||
 								  (method == 'POST' && url == '/help');
-
 		url = '/api' + url;
 
 		if (!/^[\s]*$/.test(sid)){
@@ -158,27 +162,25 @@ $(function(){
 		}
 
 		var getRequestBody = function(){
-			if (/^[\s]*$/.test(body)){
-				return null;
-			}
-
-			var items = body.split(/[ \n]*\n[ \n]*/);
-			var pair;
 			var data = {};
-			for (var i = 0; i < items.length; i++){
-				pair = items[i].split('=');
-				if (!data[pair[0]]){
-					data[pair[0]] = pair[1];
-				}
-				else if (data[pair[0]] instanceof Array){
-					data[pair[0]].push(pair[1]);
-				}
-				else{
-					data[pair[0]] = [data[pair[0]]];
-					data[pair[0]].push(pair[1]);
+			var i;
+			if (!/^[\s]*$/.test(body)){
+				var items = body.split(/[ \n]*\n[ \n]*/);
+				var pair;
+				for (i = 0; i < items.length; i++){
+					pair = items[i].split('=');
+					if (!data[pair[0]]){
+						data[pair[0]] = pair[1];
+					}
+					else if (data[pair[0]] instanceof Array){
+						data[pair[0]].push(pair[1]);
+					}
+					else{
+						data[pair[0]] = [data[pair[0]]];
+						data[pair[0]].push(pair[1]);
+					}
 				}
 			}
-
 			if (!hasFile){
 				return data;
 			}
