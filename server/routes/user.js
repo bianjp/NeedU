@@ -338,7 +338,68 @@ router.put('/user', function(req, res){
 
 //update photo
 router.put('/user/photo', function(req, res){
+  if (!req.files.photo){
+    res.send({
+      status: 1,
+      message: '请上传图片'
+    });
+    return;
+  }
+  var file = req.files.photo;
+  var filename = req.session.userId.toString() + '.' + file.extension;
+  var filepath = '/photos/' + filename;
+  async.parallel([
+    function(callback){
+      var fs = require('fs');
+      fs.rename(file.path, 'public/photos/' + filename, function(err){
+        if (err){
+          callback(err);
+        }
+        else {
+          callback(null, true);
+        }
+      });
+    },
 
+    function(callback){
+      async.waterfall([
+        function(callback){
+          req.db.collection('users', callback);
+        },
+
+        function(col, callback){
+          col.update({_id: req.session.userId}, {
+            $set: {
+              'profile.photo': filepath
+            }
+          }, callback);
+        }
+      ],
+
+      function(err, result){
+        if (err){
+          callback(err);
+        }
+        else {
+          callback(null, result);
+        }
+      });
+    }
+  ],
+  function(err, result){
+    if (err){
+      res.send({
+        status: 3,
+        message: '操作失败'
+      });
+    }
+    else {
+      res.send({
+        status: 0,
+        photo: filepath
+      });
+    }
+  });
 });
 
 //update password
