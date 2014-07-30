@@ -143,6 +143,9 @@ $(function(){
 		var sid = $('#sid').val();
 		var body = $('#body').val().trim();
 
+		var hasFile = (method == 'PUT' && url == '/user/photo') ||
+								  (method == 'POST' && url == '/help');
+
 		url = '/api' + url;
 
 		if (!/^[\s]*$/.test(sid)){
@@ -175,28 +178,53 @@ $(function(){
 					data[pair[0]].push(pair[1]);
 				}
 			}
-			return data;
+
+			if (!hasFile){
+				return data;
+			}
+			else{
+				var formdata = new FormData();
+				for (var key in data){
+					formdata.append(key, data[key]);
+				}
+				var files = $('#files')[0].files;
+				if (url.indexOf('photo') != -1){
+					formdata.append('photo', files[0]);
+				}
+				else{
+					for (i = 0; i < files.length; i++){
+						formdata.append('images', files[i]);
+					}
+				}
+				return formdata;
+			}
 		};
 
 		$('#result textarea').val('');
 
-		$.ajax({
+		var options = {
 			url: url,
 			type: method,
 			data: getRequestBody(),
-			dataType: 'text',
+			dataType: 'json',
 			error: function(jqXHR, textStatus, errorThrown){
 				$('#result textarea').val(textStatus);
 			},
 			success: function(data, textStatus){
-				data = JSON.parse(data);
 				$('#result textarea').val(JSON.stringify(data, null, '    '));
 				console.log(data);
 				if (data.sid){
 					$('#sid').val(data.sid);
 				}
 			}
-		});
+		};
+
+		if (hasFile){
+			options.contentType = false;
+			options.processData = false;
+		}
+
+		$.ajax(options);
 	});
 
 });

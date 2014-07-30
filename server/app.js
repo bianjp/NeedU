@@ -4,6 +4,7 @@ var favicon = require('static-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var multer  = require('multer');  // handling multipart/form-data
 var session = require('express-session');
 var config = require('./config/config');
 
@@ -17,6 +18,7 @@ app.use(favicon());
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
+app.use(multer({ dest: './public/temp/'}));
 
 app.use(express.static(path.join(__dirname, 'public')));
 
