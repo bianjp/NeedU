@@ -5,6 +5,23 @@ var ObjectID = require('mongodb').ObjectID;
 var _ = require('underscore');
 var notification = require('../lib/notification');
 
+var getImages = function(files){
+  if (!files){
+    return [];
+  }
+  if (!(files instanceof Array)){ //转为数组统一处理
+    files = [files];
+  }
+  var images = [];
+  var fs = require('fs');
+
+  for (var i = 0; i < files.length; i++){
+    images.push('/images/' + files[i].name);
+    fs.rename(files[i].path, 'public/images/' + files[i].name);
+  }
+  return images;
+};
+
 // add a help
 router.post('/help', function(req, res){
 
@@ -15,11 +32,14 @@ router.post('/help', function(req, res){
     createdBy: req.session.userId,
     title: req.body.title,
     content: req.body.content,
+    images: [],
     tags: req.body.tags ? (req.body.tags instanceof Array ? req.body.tags : [req.body.tags]) : [],
     up: [],
     down: [],
     commentCount: 0
   };
+
+  help.images = getImages(req.files.images);
 
   async.waterfall([
     function(callback){
