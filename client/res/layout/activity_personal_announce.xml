@@ -41,24 +41,6 @@
 		    android:layout_alignLeft="@id/name"
 		    android:text="@string/school">
 		</TextView>
-		<TextView android:id="@+id/appreciatedNum"
-		    android:layout_height="20dp"
-		    android:layout_width="wrap_content"
-		    android:gravity="center"
-		    android:layout_alignParentRight="true"
-		    android:layout_alignBottom="@id/headpic"
-		    android:layout_marginRight="15dp"
-		    android:text="@string/number">
-		</TextView>
-		<ImageView
-	    	android:id="@+id/heart"
-	    	android:src="@drawable/heart"
-	    	android:layout_width="20dp"
-	    	android:layout_height="20dp"
-	    	android:layout_alignBottom="@id/appreciatedNum"
-	    	android:layout_toLeftOf="@id/appreciatedNum"
-	    	android:scaleType="centerCrop"
-	    	android:contentDescription="@string/app_name"/>
 	</RelativeLayout>
 	
 	<LinearLayout android:id="@+id/linearlayout01"
@@ -146,29 +128,10 @@
 			android:layout_height="40dp"
 			android:layout_gravity="right">
 		</Button>
-	    <TextView android:id="@+id/AnnouncedNeed01"
-			android:layout_width="fill_parent"
-			android:layout_height="match_parent"
-			android:layout_weight="1"
-			android:layout_marginBottom="10dp"
-			android:text="@string/announcedNeed01"
-			android:background="@drawable/bg_edittext_normal">
-		</TextView>	
-		<TextView android:id="@+id/AnnouncedNeed02"
-			android:layout_width="fill_parent"
-			android:layout_height="match_parent"
-			android:layout_weight="1"
-			android:layout_marginBottom="10dp"
-			android:text="@string/announcedNeed02"
-			android:background="@drawable/bg_edittext_normal">
-		</TextView>	
-		<TextView android:id="@+id/AnnouncedNeed03"
-			android:layout_width="fill_parent"
-			android:layout_height="match_parent"
-			android:layout_weight="1"
-			android:layout_marginBottom="10dp"
-			android:text="@string/announcedNeed03"
-			android:background="@drawable/bg_edittext_normal">
-		</TextView>	
+		<ListView
+		    android:id="@+id/helpListView"
+		    android:layout_width="match_parent"
+		    android:layout_height="wrap_content" >
+		</ListView>
 	</LinearLayout>
 </RelativeLayout>

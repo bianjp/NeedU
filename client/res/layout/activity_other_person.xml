@@ -48,24 +48,6 @@
 		    android:layout_marginTop="20dp"
 		    android:layout_marginRight="10dp"
 		    android:text="+关注" />
-		<TextView android:id="@+id/appreciatedNum"
-		    android:layout_height="20dp"
-		    android:layout_width="wrap_content"
-		    android:gravity="center"
-		    android:layout_alignParentRight="true"
-		    android:layout_alignBottom="@id/headpic"
-		    android:layout_marginRight="15dp"
-		    android:text="@string/number">
-		</TextView>
-		<ImageView
-	    	android:id="@+id/heart"
-	    	android:src="@drawable/heart"
-	    	android:layout_width="20dp"
-	    	android:layout_height="20dp"
-	    	android:layout_alignBottom="@id/appreciatedNum"
-	    	android:layout_toLeftOf="@id/appreciatedNum"
-	    	android:scaleType="centerCrop"
-	    	android:contentDescription="@string/app_name"/>
 	</RelativeLayout>
 	
 	<TextView android:id="@+id/personal_description"

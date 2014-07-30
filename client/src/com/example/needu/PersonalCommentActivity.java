@@ -1,33 +1,69 @@
 package com.example.needu;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.AdapterView.OnItemClickListener;
 
 public class PersonalCommentActivity extends Activity {
+	private String serverUrl = Network.SERVER + "/helps/commented";
+	private String sessionId;
+	private String name;
+	private String college;
+	
+	private TextView nameText;
+	private TextView collegeText;
 	private Button squareButton;
 	private Button setButton;
 	private Button personalDataButton;
 	private Button announceButton;
 	private Button interestButton;
+	private ListView helpListView;
 	
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_personal_comment);
 	
+		SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
+		sessionId = cookies.getString("sessionId", "");
+		name = cookies.getString("name", "");
+		college = cookies.getString("school", "");
+		
 		initViews();
+		getCommentedHelps();
 	}
 	
 	private void initViews()
 	{
+		nameText = (TextView)findViewById(R.id.name);
+		collegeText = (TextView)findViewById(R.id.college);
+		nameText.append(name);
+		collegeText.append(college);
+		
 		squareButton = (Button)findViewById(R.id.squareButton);
 		setButton = (Button)findViewById(R.id.setButton);
 		personalDataButton = (Button)findViewById(R.id.personalDataButton);
 		announceButton = (Button)findViewById(R.id.announceButton);
 		interestButton = (Button)findViewById(R.id.interestButton);
+		helpListView = (ListView)findViewById(R.id.helpListView);
 		
 		squareButton.setOnClickListener(listener);
 		setButton.setOnClickListener(listener);
@@ -57,4 +93,103 @@ public class PersonalCommentActivity extends Activity {
 		}
 	};
 	
+	private void getCommentedHelps() {
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				serverUrl = serverUrl + "?sid=" + sessionId;
+				Network network = new Network();
+				JSONObject json = network.get(serverUrl);
+				sendMessage(Network.MSG_OK, json);
+			}
+		}).start();
+	}
+	
+	private Handler mHandler = new Handler() {
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+			case Network.MSG_OK:
+				JSONObject json = (JSONObject)msg.obj;
+				handleGetResult(json);
+				break;
+
+			default:
+				break;
+			}
+		}
+	};
+	
+	private void handleGetResult(JSONObject json) {
+		int resultStatus = -3;
+		try {
+			resultStatus = json.getInt("status");
+			switch (resultStatus) {
+			case 0:
+				onGetSuccess(json);
+				break;
+
+			default:
+				Toast.makeText(this, new String(json.getString("message").getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
+				break;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+	
+	private void onGetSuccess(JSONObject json) {
+		try {
+			final JSONArray helpArray = json.getJSONArray("helps");
+			if (helpArray.length() == 0) {
+				helpListView.setAdapter(null);
+				Toast.makeText(this, "你还未进行过评论", Toast.LENGTH_SHORT).show();
+				return ;
+			}
+			ArrayList<HashMap<String, Object>> helpList = new ArrayList<HashMap<String,Object>>();
+			for (int i = 0; i < helpArray.length(); i++) {
+				JSONObject helpJson = helpArray.optJSONObject(i);
+				HashMap<String, Object> help = new HashMap<String, Object>();
+				
+				String title = "标题：" + helpJson.getString("title");
+				String content = helpJson.getString("content");
+				JSONArray tagsArray = helpJson.getJSONArray("tags");
+				String tags = "标签：" + tagsArray.optString(0);
+				for (int j = 1; j < tagsArray.length(); j++) {
+					tags = tags + ';' + tagsArray.optString(j);
+				}
+				String helpString = title + "\n" + content + "\n" + tags;
+				help.put("content", helpString);
+				helpList.add(help);
+			}
+			SimpleAdapter adapter = new SimpleAdapter(this, helpList, R.layout.help,
+					new String[]{"content"}, new int[]{R.id.helpContent});
+			helpListView.setAdapter(adapter);
+			helpListView.setOnItemClickListener(new OnItemClickListener() {
+
+				@Override
+				public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+					JSONObject helpJson = helpArray.optJSONObject(position);
+					try {
+						String helpId = helpJson.getString("_id");
+						Intent intent = new Intent(PersonalCommentActivity.this, NeedDetailActivity.class);
+						intent.putExtra("helpId", helpId);
+						startActivity(intent);
+					} catch (JSONException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			});
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+	
+	private void sendMessage(int what, Object obj) {
+		Message msg = Message.obtain();
+		msg.what = what;
+		msg.obj = obj;
+		mHandler.sendMessage(msg);
+	}
 }

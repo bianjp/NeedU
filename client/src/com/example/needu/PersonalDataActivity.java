@@ -19,6 +19,8 @@ import android.widget.Toast;
 public class PersonalDataActivity extends Activity {
 	private String serverUrl = Network.SERVER + "/user/";
 	
+	private TextView nameText;
+	private TextView collegeText;
 	private TextView descriptionText;
 	private TextView schoolText;
 	private TextView majorText;
@@ -48,6 +50,8 @@ public class PersonalDataActivity extends Activity {
 	
 	private void initViews()
 	{
+		nameText = (TextView)findViewById(R.id.name);
+		collegeText = (TextView)findViewById(R.id.college);
 		descriptionText = (TextView)findViewById(R.id.personal_description);
 		name2Text = (TextView)findViewById(R.id.name2);
 		schoolText = (TextView)findViewById(R.id.school);
@@ -146,6 +150,8 @@ public class PersonalDataActivity extends Activity {
 	private void onGetSuccess(JSONObject json) {
 		try {
 			JSONObject profile = json.getJSONObject("profile");
+			nameText.append(profile.getString("name").equals("null")?"未填写":profile.getString("name"));
+			collegeText.append(profile.getString("school").equals("null")?"未填写":profile.getString("school"));
 			descriptionText.append(profile.getString("description").equals("null")?"未填写":profile.getString("description"));
 			name2Text.append(profile.getString("name").equals("null")?"未填写":profile.getString("name"));
 			schoolText.append(profile.getString("school").equals("null")?"未填写":profile.getString("school"));

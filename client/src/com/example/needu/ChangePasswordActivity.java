@@ -114,7 +114,6 @@ public class ChangePasswordActivity extends Activity {
 	
 	private void handleChangeResult(JSONObject json) {
 		int resultStatus = -3;
-		
 		try {
 			resultStatus = json.getInt("status");
 			switch (resultStatus) {

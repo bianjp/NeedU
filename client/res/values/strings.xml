@@ -38,12 +38,6 @@
     <string name="comment">我评论的</string>
     <string name="interest">我关注的</string>
     <string name="new_need">发布求助</string>
-    <string name="announcedNeed01"></string>
-    <string name="announcedNeed02"></string>
-    <string name="announcedNeed03"></string>
-    <string name="commentedNeed01"></string>
-    <string name="commentedNeed02"></string>
-    <string name="commentedNeed03"></string>
     <string name="interest_topics">关注的话题：</string>
     <string name="interest_users">关注的用户：</string>
     <string name="makesure">确定</string>

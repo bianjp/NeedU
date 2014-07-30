@@ -76,7 +76,7 @@ public class SetActivity extends Activity {
 			} else if (arg0.getId() == R.id.exit) {
 				SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
 				Editor editor = cookies.edit();
-				editor.remove("sessionId");
+				editor.clear();
 				editor.commit();
 				
 				intent.setClass(SetActivity.this, LoginActivity.class);

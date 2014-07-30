@@ -8,6 +8,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -22,8 +23,9 @@ import android.net.NetworkInfo;
 import android.util.Log;
 
 public class Network {
-	public static final String SERVER = "http://192.168.22.1:3000/api";
+	public static final String SERVER = "http://172.29.173.1:3000/api";
 	public static final int MSG_OK = 200;
+	public static final int MSG_FAILED = 0;
 	
 	private HttpClient client = new DefaultHttpClient();
 	
@@ -63,6 +65,19 @@ public class Network {
 		try {
 			put.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
 			response = client.execute(put);
+			json = handleResponse(response);
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return json;
+	}
+	
+	public JSONObject delete(String serverUrl) {
+		HttpDelete delete = new HttpDelete(serverUrl);
+		HttpResponse response = null;
+		JSONObject json = null;
+		try {
+			response = client.execute(delete);
 			json = handleResponse(response);
 		} catch (Exception e) {
 			// TODO: handle exception

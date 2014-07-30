@@ -171,22 +171,25 @@ public class RegisterActivity extends Activity {
 	private void onRegisterSuccess(JSONObject json) {
 		Toast.makeText(this, "注册成功", Toast.LENGTH_SHORT).show();
 		
-		String sessionId = null;
-		String studentId = null;
 		try {
-			sessionId = json.getString("sid");
+			String sessionId = json.getString("sid");
 			JSONObject user = json.getJSONObject("user");
-			studentId = user.getString("_id");
+			String studentId = user.getString("_id");
+			JSONObject profile = user.getJSONObject("profile");
+			String name = profile.getString("name");
+			String school = profile.getString("school");
+			
+			SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
+			Editor editor = cookies.edit();
+			editor.putString("sessionId", sessionId);
+			editor.putString("studentId", studentId);
+			editor.putString("name", name);
+			editor.putString("school", school);
+			editor.commit();
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
-		Editor editor = cookies.edit();
-		editor.putString("sessionId", sessionId);
-		editor.putString("studentId", studentId);
-		editor.commit();
 		
 		Intent intent = new Intent(this, GroundActivity.class);
 		startActivity(intent);
