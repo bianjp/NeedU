@@ -197,7 +197,14 @@ $(function(){
 			else{
 				var formdata = new FormData();
 				for (var key in data){
-					formdata.append(key, data[key]);
+					if (data[key] instanceof Array){
+						for (i = 0; i < data[key].length; i++){
+							formdata.append(key, data[key][i]);
+						}
+					}
+					else{
+						formdata.append(key, data[key]);
+					}
 				}
 				var files = $('#files')[0].files;
 				if (url.indexOf('photo') != -1){
