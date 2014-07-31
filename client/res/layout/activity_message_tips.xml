@@ -49,6 +49,16 @@
 			android:text="@string/tips_mode2">
 		</RadioButton>
 	</RadioGroup>
+	
+	<Button
+	    android:id="@+id/finishButton"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_below="@id/modeRadioGroup01"
+	    android:layout_marginTop="10dp"
+	    android:layout_centerHorizontal="true"
+	    android:text="完成" />
+
 	</RelativeLayout>
 
 </RelativeLayout>

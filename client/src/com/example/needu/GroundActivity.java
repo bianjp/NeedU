@@ -5,6 +5,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -26,12 +29,15 @@ import android.widget.Toast;
 
 public class GroundActivity extends Activity {
 	private String getNotificationsUrl = Network.SERVER + "/notifications";
+	private String deleteNotificationsUrl = Network.SERVER + "/notifications/all";
 	private String getLatestUrl = Network.SERVER + "/helps/latest";
 	private String getConcernsUrl = Network.SERVER + "/helps/concerns";
 	private static final int MSG_GET_NOTIFICATIONS = 201;
-	private static final int MSG_GET_HELPS = 202;
+	private static final int MSG_DELETE_NOTIFICATIONS = 202;
+	private static final int MSG_GET_HELPS = 203;
 	private static final int NUM_PER_PAGE = 20;
 	private String sessionId;
+	private String mode;
 	private boolean viewAll = true;
 	
 	private EditText inputEditText;
@@ -51,6 +57,7 @@ public class GroundActivity extends Activity {
 		
 		SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
 		sessionId = cookies.getString("sessionId", "");
+		mode = cookies.getString("mode", "ring");
 		
 		initViews();
 		getNotifications();
@@ -139,6 +146,20 @@ public class GroundActivity extends Activity {
 		}).start();
 	}
 	
+	private void deleteAllNotifications() {
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				String tmpServerUrl = deleteNotificationsUrl + "?sid=" + sessionId;
+				Log.e("alen", tmpServerUrl);
+				Network network = new Network();
+				JSONObject json = network.delete(tmpServerUrl);
+				sendMessage(MSG_DELETE_NOTIFICATIONS, json);
+			}
+		}).start();
+	}
+	
 	private void getLatestNeeds(final int limit, final int offset, final String tags) {
 		new Thread(new Runnable() {
 			
@@ -175,10 +196,15 @@ public class GroundActivity extends Activity {
 				JSONObject json = (JSONObject)msg.obj;
 				handleNotificationResult(json);
 				break;
+				
+			case MSG_DELETE_NOTIFICATIONS:
+				JSONObject json2 = (JSONObject)msg.obj;
+				handleDeleteNotificationResult(json2);
+				break;
 			
 			case MSG_GET_HELPS:
-				JSONObject json2 = (JSONObject)msg.obj;
-				handleLatestNeedsResult(json2);
+				JSONObject json3 = (JSONObject)msg.obj;
+				handleLatestNeedsResult(json3);
 				break;
 
 			default:
@@ -194,6 +220,24 @@ public class GroundActivity extends Activity {
 			switch (resultStatus) {
 			case 0:
 				onNotificationSuccess(json);
+				break;
+
+			default:
+				Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
+				break;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+	
+	private void handleDeleteNotificationResult(JSONObject json) {
+		int resultStatus = -3;
+		try {
+			resultStatus = json.getInt("status");
+			switch (resultStatus) {
+			case 0:
+				// TODO
 				break;
 
 			default:
@@ -224,7 +268,51 @@ public class GroundActivity extends Activity {
 	}
 	
 	private void onNotificationSuccess(JSONObject json) {
-		Log.e("alen", json.toString());
+		try {
+			JSONArray noteArray = json.getJSONArray("notifications");
+			NotificationManager notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+			for (int i = 0; i < noteArray.length(); i++) {
+				JSONObject noteJSON = noteArray.optJSONObject(i);
+				if (noteJSON.has("followerId")) {
+					String followerId = noteJSON.getString("followerId");
+					String followerName = noteJSON.getString("followerName");
+					Intent intent = new Intent(this, OtherPersonActivity.class);
+					intent.putExtra("userId", followerId);
+					PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+					Notification notification = new Notification();
+					notification.icon = R.drawable.icon;
+					notification.tickerText = followerName + "关注了你";
+					if (mode.equals("ring")) {
+						notification.defaults = Notification.DEFAULT_SOUND;
+					} else if (mode.equals("vibrate")) {
+						notification.defaults = Notification.DEFAULT_VIBRATE;
+					}
+					notification.setLatestEventInfo(this, "NeedU", followerName + "关注了你", pendingIntent);
+					notification.flags |= Notification.FLAG_AUTO_CANCEL;
+					notificationManager.notify(i, notification);
+				} else if (noteJSON.has("type")) {
+					String helpId = noteJSON.getString("helpId");
+					Intent intent = new Intent(this, NeedDetailActivity.class);
+					intent.putExtra("helpId", helpId);
+					PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+					Notification notification = new Notification();
+					notification.icon = R.drawable.icon;
+					notification.tickerText = "有新评论";
+					if (mode.equals("ring")) {
+						notification.defaults = Notification.DEFAULT_SOUND;
+					} else if (mode.equals("vibrate")) {
+						notification.defaults = Notification.DEFAULT_VIBRATE;
+					}
+					notification.setLatestEventInfo(this, "NeedU", "有新评论", pendingIntent);
+					notification.flags |= Notification.FLAG_AUTO_CANCEL;
+					notificationManager.notify(i, notification);
+				}
+			}
+			deleteAllNotifications();
+		} catch (Exception e) {
+			// TODO: handle exception
+			Log.e("alen", e.toString());
+		}
 	}
 	
 	private void onLatestNeedsSuccess(JSONObject json) {
