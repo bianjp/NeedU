@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var ObjectID = require('mongodb').ObjectID;
+var db = require('../lib/db').getConnection();
 
 // check sessions
 router.use(function(req, res, next){
@@ -26,7 +27,7 @@ router.use(function(req, res, next){
 
     async.waterfall([
       function(callback){
-        req.db.collection('sessions', callback);
+        db.collection('sessions', callback);
       },
 
       function(col, callback){
@@ -49,7 +50,7 @@ router.use(function(req, res, next){
     next();
   }
   else {
-    if (req.method == 'POST' && (req.path == '/user/authentication' 
+    if (req.method == 'POST' && (req.path == '/user/authentication'
       || req.path == '/user/authentication/' || req.path == '/user' || req.path == '/user/')){
       next();
     }

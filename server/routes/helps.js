@@ -4,6 +4,7 @@ var async = require('async');
 var ObjectID = require('mongodb').ObjectID;
 var _ = require('underscore');
 var notification = require('../lib/notification');
+var db = require('../lib/db').getConnection();
 
 var validateHelp = function(help){
   if (!help.title){
@@ -66,7 +67,7 @@ router.post('/help', function(req, res){
 
   async.waterfall([
     function(callback){
-      req.db.collection('helps', callback);
+      db.collection('helps', callback);
     },
 
     function(col, callback){
@@ -86,7 +87,7 @@ router.post('/help', function(req, res){
         status: 0,
         help: items[0]
       });
-      notification.informNewHelp(req.db, items[0]);
+      notification.informNewHelp(items[0]);
     }
   });
 });
@@ -109,7 +110,7 @@ router.delete('/help/:helpId', function(req, res){
 
   async.waterfall([
     function(callback){
-      req.db.collection('helps', callback);
+      db.collection('helps', callback);
     },
 
     function(col, callback){
@@ -157,7 +158,7 @@ router.get('/help/:helpId', function(req, res){
 
   async.waterfall([
     function(callback){
-      req.db.collection('helps', callback);
+      db.collection('helps', callback);
     },
 
     function(col, callback){
@@ -207,7 +208,7 @@ router.get('/help/:helpId/comments', function(req, res){
 
   async.waterfall([
     function(callback){
-      req.db.collection('comments', callback);
+      db.collection('comments', callback);
     },
 
     function(col, callback){
@@ -237,7 +238,7 @@ router.get('/help/:helpId/comments', function(req, res){
   });
 });
 
-var getHelps = function(selector, options, db, res){
+var getHelps = function(selector, options, res){
   async.waterfall([
     function(callback){
       db.collection('helps', callback);
@@ -288,7 +289,7 @@ router.get('/helps/user/:userId', function(req, res){
     limit: parseInt(req.query.limit) || 10,
     skip: parseInt(req.query.offset) || 0
   };
-  getHelps(selector, options, req.db, res);
+  getHelps(selector, options, res);
 });
 
 // get the latest helps
@@ -311,7 +312,7 @@ router.get('/helps/latest', function(req, res){
       selector.tags = req.query.tags;
     }
   }
-  getHelps(selector, options, req.db, res);
+  getHelps(selector, options, res);
 });
 
 // get the helps added by the persons I concerns
@@ -326,7 +327,7 @@ router.get('/helps/concerns', function(req, res){
 
   async.waterfall([
     function(callback){
-      req.db.collection('users', callback);
+      db.collection('users', callback);
     },
 
     function(col, callback){
@@ -347,7 +348,7 @@ router.get('/helps/concerns', function(req, res){
           $in: item.concerns
         }
       };
-      getHelps(selector, options, req.db, res);
+      getHelps(selector, options, res);
     }
   });
 });
@@ -356,7 +357,7 @@ router.get('/helps/concerns', function(req, res){
 router.get('/helps/commented', function(req, res){
   async.waterfall([
     function(callback){
-      req.db.collection('comments', callback);
+      db.collection('comments', callback);
     },
 
     function(col, callback){
@@ -395,7 +396,7 @@ router.get('/helps/commented', function(req, res){
         };
         async.waterfall([
           function(callback){
-            req.db.collection('helps', callback);
+            db.collection('helps', callback);
           },
 
           function(col, callback){
@@ -422,7 +423,7 @@ router.get('/helps/commented', function(req, res){
     },
 
     function(callback){
-      getHelps(selector, options, req.db, res);
+      getHelps(selector, options, res);
     }
   ],
 
@@ -450,7 +451,7 @@ var upDown = function(req, res, operation){
   var helps;
   async.waterfall([
     function(callback){
-      req.db.collection('helps', callback);
+      db.collection('helps', callback);
     },
 
     function(col, callback){

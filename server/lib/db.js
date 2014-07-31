@@ -1,6 +1,7 @@
 var connection;
+var async = require('async');
 
-exports.getConnection = function(callback){
+exports.connect = function(callback){
   if (connection)
     callback(connection);
   else {
@@ -12,35 +13,39 @@ exports.getConnection = function(callback){
       if(err){
         throw new Error('连接数据库失败！');
       }
-      callback(db);
+      else {
+        connection = db;
+        callback(db);
+      }
     });
   }
 };
 
+exports.getConnection = function(){
+  return connection;
+};
+
 //清空数据库
 exports.clear = function(callback){
-  exports.getConnection(function(db){
-    db.dropDatabase(function(err, result){
-      if (err){
-        throw new Error('清空数据库失败！');
-      }
-      if (callback)
-        callback();
-    });
+  connection.dropDatabase(function(err, result){
+    if (err){
+      throw new Error('清空数据库失败！');
+    }
+    if (callback)
+      callback();
   });
 };
 
 //插入即使是生产模式下也需要的数据
 exports.initialize = function(callback){
-  exports.getConnection(function(db){
+  //插入管理员帐号
+  async.waterfall([
+    function(callback){
+      connection.collection('users', callback);
+    },
 
-    //插入管理员帐号
-    db.collection('users', function(err, col){
-      if (err){
-        throw new Error('获取users collection失败！');
-      }
-
-      col.insert({
+    function(col, callback){
+      var user = {
         username: 'admin',
         createdAt: new Date(),
         role: 'admin',
@@ -48,16 +53,17 @@ exports.initialize = function(callback){
           identity: '6000a683c6d7442f8209ded2f2e52d7b376e3d58',
           salt: '1811b194ae23a1f39bd0'
         }
-      }, function(err){
-        if (err){
-          throw new Error('插入管理员账号失败');
-        }
+      };
+      col.insert(user, callback);
+    }
+  ],
 
-        if (callback){
-          callback();
-        }
-      });
-    
-    });
+  function(err, items){
+    if (err){
+      throw new Error('获取users collection失败！');
+    }
+    else if (callback){
+      callback();
+    }
   });
 };

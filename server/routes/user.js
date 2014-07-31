@@ -4,6 +4,7 @@ var async = require('async');
 var crypto = require('crypto');
 var ObjectID = require('mongodb').ObjectID;
 var _ = require('underscore');
+var db = require('../lib/db').getConnection();
 
 var generateSalt = function(){
   return crypto.randomBytes(10).toString('hex');
@@ -24,7 +25,7 @@ var generatePassword = function(origin){
   };
 };
 
-var createSession = function(db, userId, callback){
+var createSession = function(userId, callback){
   async.waterfall([
     function(callback){
       db.collection('sessions', callback);
@@ -133,7 +134,7 @@ router.post('/user', function(req, res){
 
   async.waterfall([
     function(callback){
-      req.db.collection('users', callback);
+      db.collection('users', callback);
     },
 
     function(col, callback){
@@ -155,7 +156,7 @@ router.post('/user', function(req, res){
 
     function(items, callback){
       user = items[0];
-      createSession(req.db, items[0]._id, callback);
+      createSession(items[0]._id, callback);
     }
   ], function(err, sid){
     if (err || !sid){
@@ -181,7 +182,7 @@ router.post('/user', function(req, res){
 router.post('/user/authentication', function(req, res){
   async.waterfall([
     function(callback){
-      req.db.collection('users', callback);
+      db.collection('users', callback);
     },
 
     function(col, callback){
@@ -200,7 +201,7 @@ router.post('/user/authentication', function(req, res){
         delete item.concernedBy;
         delete item.concerns;
         var user = item;
-        createSession(req.db, user._id, function(err, sid){
+        createSession(user._id, function(err, sid){
           if (err){
             res.send({
               status: 3,
@@ -235,7 +236,7 @@ router.get('/user/:userId', function(req, res){
 
   async.waterfall([
     function(callback){
-      req.db.collection('users', callback);
+      db.collection('users', callback);
     },
 
     function(col, callback){
@@ -296,7 +297,7 @@ router.put('/user', function(req, res){
 
   async.waterfall([
     function(callback){
-      req.db.collection('users', callback);
+      db.collection('users', callback);
     },
 
     function(col, callback){
@@ -364,7 +365,7 @@ router.put('/user/photo', function(req, res){
     function(callback){
       async.waterfall([
         function(callback){
-          req.db.collection('users', callback);
+          db.collection('users', callback);
         },
 
         function(col, callback){
@@ -415,7 +416,7 @@ router.put('/user/password', function(req, res){
   var collection;
   async.waterfall([
     function(callback){
-      req.db.collection('users', callback);
+      db.collection('users', callback);
     },
 
     function(col, callback){

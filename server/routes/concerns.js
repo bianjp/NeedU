@@ -5,12 +5,13 @@ var crypto = require('crypto');
 var ObjectID = require('mongodb').ObjectID;
 var _ = require('underscore');
 var notification = require('../lib/notification');
+var db = require('../lib/db').getConnection();
 
 router.get('/concerns', function(req, res){
   var users;
   async.waterfall([
     function(callback){
-      req.db.collection('users', callback);
+      db.collection('users', callback);
     },
 
     function(col, callback){
@@ -75,7 +76,7 @@ router.post('/concern/:userId', function(req, res){
   var users;
   async.waterfall([
     function(callback){
-      req.db.collection('users', callback);
+      db.collection('users', callback);
     },
 
     function(col, callback){
@@ -135,7 +136,7 @@ router.post('/concern/:userId', function(req, res){
             res.send({
               status: 0
             });
-            notification.informNewConcerner(req.db, req.session.userId, ObjectID(req.params.userId));
+            notification.informNewConcerner(req.session.userId, ObjectID(req.params.userId));
           }
       });
     }
@@ -153,7 +154,7 @@ router.delete('/concern/:userId', function(req, res){
   var users;
   async.waterfall([
     function(callback){
-      req.db.collection('users', callback);
+      db.collection('users', callback);
     },
 
     function(col, callback){

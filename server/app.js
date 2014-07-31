@@ -23,11 +23,7 @@ app.use(multer({ dest: './public/temp/'}));
 app.use(express.static(path.join(__dirname, 'public')));
 
 var db = require('./lib/db');
-db.getConnection(function(db) {
-  app.use(function(req, res, next){
-    req.db = db;
-    next();
-  });
+db.connect(function(db) {
 
   app.use('/admin', cookieParser(config.cookieSecret));
   app.use('/admin', session());

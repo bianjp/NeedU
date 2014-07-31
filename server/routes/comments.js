@@ -3,6 +3,7 @@ var router = express.Router();
 var async = require('async');
 var ObjectID = require('mongodb').ObjectID;
 var notification = require('../lib/notification');
+var db = require('../lib/db').getConnection();
 
 router.get('/comment/:commentId', function(req, res){
   var commentId;
@@ -19,7 +20,7 @@ router.get('/comment/:commentId', function(req, res){
 
   async.waterfall([
     function(callback){
-      req.db.collection('helps', callback);
+      db.collection('helps', callback);
     },
 
     function(col, callback){
@@ -49,7 +50,7 @@ router.get('/comment/:commentId', function(req, res){
   });
 });
 
-var modifyCommentCount = function(db, helpId, n){
+var modifyCommentCount = function(helpId, n){
   async.waterfall([
     function(callback){
       db.collection('helps', callback);
@@ -72,7 +73,7 @@ var modifyCommentCount = function(db, helpId, n){
 var insertComment = function(req, res, comment){
   async.waterfall([
     function(callback){
-      req.db.collection('comments', callback);
+      db.collection('comments', callback);
     },
 
     function(col, callback){
@@ -93,11 +94,11 @@ var insertComment = function(req, res, comment){
         comment: items[0]
       });
 
-      modifyCommentCount(req.db, comment.helpId, 1);
+      modifyCommentCount(comment.helpId, 1);
 
-      notification.informNewComment(req.db, items[0]);
+      notification.informNewComment(items[0]);
       if (items[0].commentId){
-        notification.informNewReply(req.db, items[0]);
+        notification.informNewReply(items[0]);
       }
     }
   });
@@ -154,7 +155,7 @@ router.post('/comment/help/:helpId', function(req, res){
     comment.commentId = commentId;
     async.waterfall([
       function(callback){
-        req.db.collection('comments', callback);
+        db.collection('comments', callback);
       },
 
       function(col, callback){
@@ -201,7 +202,7 @@ router.delete('/comment/:commentId', function(req, res){
 
   async.waterfall([
     function(callback){
-      req.db.collection('comments', callback);
+      db.collection('comments', callback);
     },
 
     function(col, callback){
@@ -245,7 +246,7 @@ router.delete('/comment/:commentId', function(req, res){
         status: 0
       });
 
-      modifyCommentCount(req.db, helpId, -1);
+      modifyCommentCount(helpId, -1);
     }
   });
 });
@@ -267,7 +268,7 @@ router.post('/comment/:commentId/thanks', function(req, res){
 
   async.waterfall([
     function(callback){
-      req.db.collection('comments', callback);
+      db.collection('comments', callback);
     },
 
     function(col, callback){
@@ -290,7 +291,7 @@ router.post('/comment/:commentId/thanks', function(req, res){
       }
       else {
         comment = item;
-        req.db.collection('helps', callback);
+        db.collection('helps', callback);
       }
     },
 

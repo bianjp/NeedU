@@ -1,6 +1,7 @@
 var async = require('async');
+var db = require('../lib/db').getConnection();
 
-var inform = function(db, notification, callback){
+var inform = function(notification, callback){
   async.waterfall([
     function(callback){
       db.collection('notifications', callback);
@@ -28,7 +29,7 @@ var inform = function(db, notification, callback){
   });
 };
 
-var informNewHelp = function(db, help){
+var informNewHelp = function(help){
   async.waterfall([
     function(callback){
       db.collection('users', callback);
@@ -58,7 +59,7 @@ var informNewHelp = function(db, help){
               helpTitle: help.title
             };
           }
-          inform(db, notifications, callback);
+          inform(notifications, callback);
         }
       }
     }
@@ -71,7 +72,7 @@ var informNewHelp = function(db, help){
   });
 };
 
-var getUserName = function(db, userId, callback){
+var getUserName = function(userId, callback){
   async.waterfall([
     function(callback){
       db.collection('users', callback);
@@ -87,7 +88,7 @@ var getUserName = function(db, userId, callback){
   });
 };
 
-var getHelp = function(db, helpId, callback){
+var getHelp = function(helpId, callback){
   async.waterfall([
     function(callback){
       db.collection('helps', callback);
@@ -103,13 +104,13 @@ var getHelp = function(db, helpId, callback){
   });
 };
 
-var informNewComment = function(db, comment){
+var informNewComment = function(comment){
   async.parallel({
     authorName: function(callback){
-      getUserName(db, comment.createdBy, callback);
+      getUserName(comment.createdBy, callback);
     },
     help: function(callback){
-      getHelp(db, comment.helpId, callback);
+      getHelp(comment.helpId, callback);
     }
   },
 
@@ -129,7 +130,7 @@ var informNewComment = function(db, comment){
         commentId: comment._id,
         commentContent: comment.content
       };
-      inform(db, notification, function(err){
+      inform(notification, function(err){
         if (err){
           console.log('Failed while inform new comment');
         }
@@ -138,8 +139,8 @@ var informNewComment = function(db, comment){
   });
 };
 
-var informNewReply = function(db, comment){
-  getUserName(db, comment.createdBy, function(err, authorName){
+var informNewReply = function(comment){
+  getUserName(comment.createdBy, function(err, authorName){
     if (err){
       console.log('Failed to get authorName while informing new reply');
     }
@@ -155,7 +156,7 @@ var informNewReply = function(db, comment){
         commentContent: comment.content
       };
 
-      inform(db, notification, function(err){
+      inform(notification, function(err){
         if (err){
           console.log('Failed while informing new reply');
         }
@@ -164,8 +165,8 @@ var informNewReply = function(db, comment){
   });
 };
 
-var informNewConcerner = function(db, concernerId, userId){
-  getUserName(db, concernerId, function(err, name){
+var informNewConcerner = function(concernerId, userId){
+  getUserName(concernerId, function(err, name){
     if (err){
       console.log('Failed while informing new concerner');
     }
@@ -176,7 +177,7 @@ var informNewConcerner = function(db, concernerId, userId){
         followerId: concernerId,
         followerName: name
       };
-      inform(db, notification, function(err){
+      inform(notification, function(err){
         if (err){
           console.log('Failed while informing new concerner');
         }

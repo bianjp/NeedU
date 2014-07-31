@@ -2,11 +2,12 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var ObjectID = require('mongodb').ObjectID;
+var db = require('../lib/db').getConnection();
 
 router.get('/notifications', function(req, res){
   async.waterfall([
     function(callback){
-      req.db.collection('notifications', callback);
+      db.collection('notifications', callback);
     },
 
     function(col, callback){
@@ -33,7 +34,7 @@ router.get('/notifications', function(req, res){
 router.delete('/notifications/all', function(req, res){
   async.waterfall([
     function(callback){
-      req.db.collection('notifications', callback);
+      db.collection('notifications', callback);
     },
 
     function(col, callback){
@@ -71,7 +72,7 @@ router.delete('/notifications/:id', function(req, res){
 
   async.waterfall([
     function(callback){
-      req.db.collection('notifications', callback);
+      db.collection('notifications', callback);
     },
 
     function(col, callback){
