@@ -121,13 +121,6 @@
 	    android:layout_marginLeft="10dp"
 	    android:layout_marginRight="10dp"
 	    android:orientation="vertical" >
-		<Button android:text="@string/new_need"
-		    android:textSize="12sp"
-			android:id="@+id/newNeedButton"
-			android:layout_width="wrap_content"
-			android:layout_height="40dp"
-			android:layout_gravity="right">
-		</Button>
 		<ListView
 		    android:id="@+id/helpListView"
 		    android:layout_width="match_parent"

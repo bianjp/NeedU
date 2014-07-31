@@ -62,10 +62,10 @@
 		    android:layout_toRightOf="@id/TextView02"
 		    android:layout_alignBaseline="@id/TextView02"
 		    android:paddingLeft="5dp"
+		    android:paddingRight="5dp"
 		    android:singleLine="true"
-		    android:text=""
-		    android:inputType="none"
-		    android:ems="5"
+		    android:hint="多个标签用空格分开"
+		    android:ems="10"
 		    android:background="@drawable/bg_edittext_normal">
 		</EditText>
 		<EditText android:id="@+id/ContentEdit"
@@ -93,7 +93,8 @@
 			android:layout_width="wrap_content"
 			android:layout_height="40dp"
 			android:layout_below="@id/addImageLayout"
-			android:layout_alignLeft="@id/TextView02">
+			android:layout_alignLeft="@id/TextView02"
+			android:visibility="gone">
 		</Button>
 	</RelativeLayout>
 	

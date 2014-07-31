@@ -53,7 +53,6 @@ public class PersonalAnnounceActivity extends Activity {
 	private Button personalDataButton;
 	private Button commentButton;
 	private Button interestButton;
-	private Button newNeedButton;
 	private ListView helpListView;
 	
 	protected void onCreate(Bundle savedInstanceState) {
@@ -85,7 +84,6 @@ public class PersonalAnnounceActivity extends Activity {
 		personalDataButton = (Button)findViewById(R.id.personalDataButton);
 		commentButton = (Button)findViewById(R.id.commentButton);
 		interestButton = (Button)findViewById(R.id.interestButton);
-		newNeedButton = (Button)findViewById(R.id.newNeedButton);
 		helpListView = (ListView)findViewById(R.id.helpListView);
 		
 		squareButton.setOnClickListener(listener);
@@ -93,19 +91,12 @@ public class PersonalAnnounceActivity extends Activity {
 		personalDataButton.setOnClickListener(listener);
 		commentButton.setOnClickListener(listener);
 		interestButton.setOnClickListener(listener);
-		newNeedButton.setOnClickListener(listener);
 	}
 	
 	private OnClickListener listener = new OnClickListener() {
 		
 		@Override
 		public void onClick(View arg0) {
-			if (arg0.getId() == R.id.newNeedButton) {
-				Intent intent = new Intent(PersonalAnnounceActivity.this, NewNeedActivity.class);
-				startActivity(intent);
-				return ;
-			}
-			
 			Intent intent = new Intent();
 			if (arg0.getId() == R.id.personalDataButton) {
 				intent.setClass(PersonalAnnounceActivity.this, PersonalDataActivity.class);
@@ -206,7 +197,7 @@ public class PersonalAnnounceActivity extends Activity {
 				break;
 
 			default:
-				Toast.makeText(this, new String(json.getString("message").getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
+				Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
 				break;
 			}
 		} catch (Exception e) {
@@ -224,7 +215,7 @@ public class PersonalAnnounceActivity extends Activity {
 				break;
 
 			default:
-				Toast.makeText(this, new String(json.getString("message").getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
+				Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
 				break;
 			}
 		} catch (Exception e) {

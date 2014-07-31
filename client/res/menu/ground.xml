@@ -4,6 +4,20 @@
     tools:context="com.example.needu.MainActivity" >
 
     <item
+        android:id="@+id/menu_new"
+        android:icon="@drawable/ic_action_new"
+        android:orderInCategory="100"
+        android:showAsAction="always"
+        android:title="新增"/>
+    
+    <item
+        android:id="@+id/menu_refresh"
+        android:icon="@drawable/ic_action_refresh"
+        android:orderInCategory="101"
+        android:showAsAction="always"
+        android:title="刷新"/>
+    
+    <item
         android:id="@+id/action_all"
         android:orderInCategory="0"
         android:title="全部" />

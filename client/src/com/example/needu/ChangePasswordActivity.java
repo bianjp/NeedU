@@ -122,7 +122,7 @@ public class ChangePasswordActivity extends Activity {
 				break;
 
 			default:
-				Toast.makeText(this, new String(json.getString("message").getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
+				Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
 				break;
 			}
 		} catch (Exception e) {

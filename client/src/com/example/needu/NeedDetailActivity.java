@@ -1,7 +1,6 @@
 package com.example.needu;
 
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.ParseException;
@@ -18,6 +17,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -25,8 +27,11 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -40,11 +45,14 @@ public class NeedDetailActivity extends Activity {
 	private String getHelpUrl = Network.SERVER + "/help/";
 	private String getUserUrl = Network.SERVER + "/user/";
 	private String postCommentUrl = Network.SERVER + "/comment/help/";
+	private String deleteCommentUrl = Network.SERVER + "/comment/";
 	private static final int MSG_GET_HELP = 201;
 	private static final int MSG_GET_COMMENT = 202;
 	private static final int MSG_POST_COMMENT = 203;
+	private static final int MSG_DELETE_COMMENT = 204;
 	private String helpId;
 	private String sessionId;
+	private String studentId;
 	
 	private ImageView protraitImageView;
 	private TextView nameTextView;
@@ -62,6 +70,7 @@ public class NeedDetailActivity extends Activity {
 		
 		SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
 		sessionId = cookies.getString("sessionId", "");
+		studentId = cookies.getString("studentId", "");
 		helpId = getIntent().getStringExtra("helpId");
 		
 		initViews();
@@ -83,9 +92,17 @@ public class NeedDetailActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				postComment();
+				handleComment();
 			}
 		});
+	}
+	
+	private void handleComment() {
+		if (TextUtils.isEmpty(commentEditText.getText())) {
+			Toast.makeText(this, "评论内容不能为空", Toast.LENGTH_SHORT).show();
+		} else {
+			postComment();
+		}
 	}
 	
 	private void getHelp() {
@@ -136,6 +153,21 @@ public class NeedDetailActivity extends Activity {
 		}).start();
 	}
 	
+	private void deleteComment(final String commentId) {
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				String tmpUrl = deleteCommentUrl + commentId + "?sid=" + sessionId;
+				Log.e("alen", tmpUrl);
+				
+				Network network = new Network();
+				JSONObject json = network.delete(tmpUrl);
+				sendMessage(MSG_DELETE_COMMENT, json);
+			}
+		}).start();
+	}
+	
 	private Handler mHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
@@ -152,6 +184,11 @@ public class NeedDetailActivity extends Activity {
 			case MSG_POST_COMMENT:
 				JSONObject json = (JSONObject)msg.obj;
 				handleCommentResult(json);
+				break;
+				
+			case MSG_DELETE_COMMENT:
+				JSONObject json2 = (JSONObject)msg.obj;
+				handleDeleteResult(json2);
 				break;
 
 			default:
@@ -258,8 +295,11 @@ public class NeedDetailActivity extends Activity {
 				for (int i = 0; i < commentArray.length(); i++) {
 					JSONObject commentJson = commentArray.optJSONObject(i);
 					HashMap<String, Object> comment = new HashMap<String, Object>();
+					String id = commentJson.getString("_id");
+					comment.put("id", id);
 					
 					String createdBy = commentJson.getString("createdBy");
+					comment.put("createdBy", createdBy);
 					comment.put("name", getUsername(createdBy));
 					String photoUrl = getPhotoUrl(createdBy);
 					if (!photoUrl.equals("null")) {
@@ -297,7 +337,25 @@ public class NeedDetailActivity extends Activity {
 				break;
 
 			default:
-				Toast.makeText(this, new String(json.getString("message").getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
+				Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
+				break;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+	
+	private void handleDeleteResult(JSONObject json) {
+		int resultStatus = -3;
+		try {
+			resultStatus = json.getInt("status");
+			switch (resultStatus) {
+			case 0:
+				onDeleteSuccess(json);
+				break;
+
+			default:
+				Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
 				break;
 			}
 		} catch (Exception e) {
@@ -325,16 +383,11 @@ public class NeedDetailActivity extends Activity {
 				}
 			});
 		} else {
-			try {
-				Toast.makeText(this, new String(help.msg.getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			Toast.makeText(this, help.msg, Toast.LENGTH_SHORT).show();
 		}
 	}
 	
-	private void updateCommentUI(ArrayList<HashMap<String, Object>> commentList) {
+	private void updateCommentUI(final ArrayList<HashMap<String, Object>> commentList) {
 		SimpleAdapter adapter = new SimpleAdapter(this, commentList, R.layout.comment,
 				new String[]{"name", "image", "date", "content"},
 				new int[]{R.id.name, R.id.image, R.id.date, R.id.content});
@@ -349,6 +402,39 @@ public class NeedDetailActivity extends Activity {
             }
         });
 		commentListView.setAdapter(adapter);
+		commentListView.setOnItemLongClickListener(new OnItemLongClickListener() {
+
+			@Override
+			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+				final HashMap<String, Object> comment = commentList.get(position);
+				String createdBy = (String) comment.get("createdBy");
+				if (createdBy.equals(studentId)) {
+					Dialog dialog = new AlertDialog.Builder(NeedDetailActivity.this)
+						.setMessage("删除该评论？")
+						.setPositiveButton("确定",
+								new DialogInterface.OnClickListener() {
+									
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										String commentId = (String) comment.get("id");
+										deleteComment(commentId);
+										dialog.dismiss();
+									}
+								})
+						.setNegativeButton("取消",
+								new DialogInterface.OnClickListener() {
+									
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										dialog.dismiss();
+									}
+								})
+						.create();
+					dialog.show();
+				}
+				return false;
+			}
+		});
 	}
 	
 	private String getUsername(String id) {
@@ -415,6 +501,12 @@ public class NeedDetailActivity extends Activity {
 	private void onCommentSuccess(JSONObject json) {
 		commentEditText.setText("");
 		Toast.makeText(this, "评论成功", Toast.LENGTH_SHORT).show();	
+		
+		getHelp();
+	}
+	
+	private void onDeleteSuccess(JSONObject json) {
+		Toast.makeText(this, "删除成功", Toast.LENGTH_SHORT).show();	
 		
 		getHelp();
 	}

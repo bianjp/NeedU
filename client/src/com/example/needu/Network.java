@@ -23,7 +23,8 @@ import android.net.NetworkInfo;
 import android.util.Log;
 
 public class Network {
-	public static final String HOST = "http://172.29.173.1:3000";
+//	public static final String HOST = "http://172.29.173.1:3000";
+	public static final String HOST = "http://199.231.215.144:3000";
 	public static final String SERVER = HOST + "/api";
 	public static final int MSG_OK = 200;
 	public static final int MSG_FAILED = 0;
@@ -94,7 +95,8 @@ public class Network {
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 				HttpEntity entity = response.getEntity();
 				String entityString = EntityUtils.toString(entity);
-				Log.e("alen", new String(entityString.getBytes("iso-8859-1"),"UTF-8"));
+				entityString = new String(entityString.getBytes("iso-8859-1"),"UTF-8");
+				Log.e("alen", entityString);
 		//		String jsonString = entityString.substring(entityString.indexOf("{"));
 		//		Log.e("alen", jsonString);
 				json = new JSONObject(entityString);

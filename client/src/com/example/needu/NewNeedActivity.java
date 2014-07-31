@@ -119,16 +119,21 @@ public class NewNeedActivity extends Activity {
 			public void run() {
 				List<NameValuePair> params = new ArrayList<NameValuePair>();
 				params.add(new BasicNameValuePair("title", titleEditText.getText().toString()));
-				params.add(new BasicNameValuePair("tags", tagEditText.getText().toString()));
 				params.add(new BasicNameValuePair("content", contentEditText.getText().toString()));
+				
+				String tags = tagEditText.getText().toString();
+				String[] tagArray = tags.split(" ");
+				for (String tag : tagArray) {
+					params.add(new BasicNameValuePair("tags", tag));
+				}
 				
 				SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
 				String sessionId = cookies.getString("sessionId", "");
 				
-				serverUrl = serverUrl + "?sid=" + sessionId;
-				Log.e("alen", serverUrl);
+				String tmpServerUrl = serverUrl + "?sid=" + sessionId;
+				Log.e("alen", tmpServerUrl);
 				Network network = new Network();
-				JSONObject json = network.post(serverUrl, params);
+				JSONObject json = network.post(tmpServerUrl, params);
 				sendMessage(Network.MSG_OK, json);
 			}
 		}).start();
@@ -159,7 +164,7 @@ public class NewNeedActivity extends Activity {
 				break;
 
 			default:
-				Toast.makeText(this, new String(json.getString("message").getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
+				Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
 				break;
 			}
 		} catch (Exception e) {

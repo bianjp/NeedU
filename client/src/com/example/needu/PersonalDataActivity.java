@@ -176,7 +176,7 @@ public class PersonalDataActivity extends Activity {
 				break;
 
 			default:
-				Toast.makeText(this, new String(json.getString("message").getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
+				Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
 				break;
 			}
 		} catch (Exception e) {
@@ -187,18 +187,18 @@ public class PersonalDataActivity extends Activity {
 	private void onGetSuccess(JSONObject json) {
 		try {
 			JSONObject profile = json.getJSONObject("profile");
-			nameText.append(profile.getString("name").equals("")?"未填写":profile.getString("name"));
-			collegeText.append(profile.getString("school").equals("")?"未填写":profile.getString("school"));
-			descriptionText.append(profile.getString("description").equals("")?"未填写":profile.getString("description"));
-			name2Text.append(profile.getString("name").equals("")?"未填写":profile.getString("name"));
-			schoolText.append(profile.getString("school").equals("")?"未填写":profile.getString("school"));
-			majorText.append(profile.getString("major").equals("")?"未填写":profile.getString("major"));
-			schoolYearText.append(profile.getString("schoolYear").equals("")?"未填写":profile.getString("schoolYear"));
+			nameText.append(profile.getString("name").equals("null")?"未填写":profile.getString("name"));
+			collegeText.append(profile.getString("school").equals("null")?"未填写":profile.getString("school"));
+			descriptionText.append(profile.getString("description").equals("null")?"未填写":profile.getString("description"));
+			name2Text.append(profile.getString("name").equals("null")?"未填写":profile.getString("name"));
+			schoolText.append(profile.getString("school").equals("null")?"未填写":profile.getString("school"));
+			majorText.append(profile.getString("major").equals("null")?"未填写":profile.getString("major"));
+			schoolYearText.append(profile.getString("schoolYear").equals("null")?"未填写":profile.getString("schoolYear"));
 			genderText.append(profile.getString("gender").equals("male")?"男":"女");
-			birthdayText.append(profile.getString("birthday").equals("")?"未填写":profile.getString("birthday"));
-			phoneText.append(profile.getString("phone").equals("")?"未填写":profile.getString("phone"));
-			qqText.append(profile.getString("QQ").equals("")?"未填写":profile.getString("QQ"));
-			wechatText.append(profile.getString("wechat").equals("")?"未填写":profile.getString("wechat"));
+			birthdayText.append(profile.getString("birthday").equals("null")?"未填写":profile.getString("birthday"));
+			phoneText.append(profile.getString("phone").equals("null")?"未填写":profile.getString("phone"));
+			qqText.append(profile.getString("QQ").equals("null")?"未填写":profile.getString("QQ"));
+			wechatText.append(profile.getString("wechat").equals("null")?"未填写":profile.getString("wechat"));
 			
 			String photoString = profile.getString("photo");
 			SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);

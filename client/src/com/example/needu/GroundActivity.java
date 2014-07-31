@@ -28,8 +28,8 @@ public class GroundActivity extends Activity {
 	private String getNotificationsUrl = Network.SERVER + "/notifications";
 	private String getLatestUrl = Network.SERVER + "/helps/latest";
 	private String getConcernsUrl = Network.SERVER + "/helps/concerns";
-	private static final int MSG_GET_HELPS = 201;
-	private static final int MSG_GET_NOTIFICATIONS = 202;
+	private static final int MSG_GET_NOTIFICATIONS = 201;
+	private static final int MSG_GET_HELPS = 202;
 	private static final int NUM_PER_PAGE = 20;
 	private String sessionId;
 	private boolean viewAll = true;
@@ -53,7 +53,7 @@ public class GroundActivity extends Activity {
 		sessionId = cookies.getString("sessionId", "");
 		
 		initViews();
-		
+		getNotifications();
 		getLatestNeeds(NUM_PER_PAGE, 0, "");
 	}
 
@@ -125,6 +125,20 @@ public class GroundActivity extends Activity {
 		}
 	};
 	
+	private void getNotifications() {
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				String tmpServerUrl = getNotificationsUrl + "?sid=" + sessionId;
+				Log.e("alen", tmpServerUrl);
+				Network network = new Network();
+				JSONObject json = network.get(tmpServerUrl);
+				sendMessage(MSG_GET_NOTIFICATIONS, json);
+			}
+		}).start();
+	}
+	
 	private void getLatestNeeds(final int limit, final int offset, final String tags) {
 		new Thread(new Runnable() {
 			
@@ -135,7 +149,7 @@ public class GroundActivity extends Activity {
 				Log.e("alen", tmpServerUrl);
 				Network network = new Network();
 				JSONObject json = network.get(tmpServerUrl);
-				sendMessage(Network.MSG_OK, json);
+				sendMessage(MSG_GET_HELPS, json);
 			}
 		}).start();
 	}
@@ -149,7 +163,7 @@ public class GroundActivity extends Activity {
 				Log.e("alen", tmpServerUrl);
 				Network network = new Network();
 				JSONObject json = network.get(tmpServerUrl);
-				sendMessage(Network.MSG_OK, json);
+				sendMessage(MSG_GET_HELPS, json);
 			}
 		}).start();
 	}
@@ -157,9 +171,14 @@ public class GroundActivity extends Activity {
 	private Handler mHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
-			case Network.MSG_OK:
+			case MSG_GET_NOTIFICATIONS:
 				JSONObject json = (JSONObject)msg.obj;
-				handleLatestNeedsResult(json);
+				handleNotificationResult(json);
+				break;
+			
+			case MSG_GET_HELPS:
+				JSONObject json2 = (JSONObject)msg.obj;
+				handleLatestNeedsResult(json2);
 				break;
 
 			default:
@@ -167,6 +186,24 @@ public class GroundActivity extends Activity {
 			}
 		}
 	};
+	
+	private void handleNotificationResult(JSONObject json) {
+		int resultStatus = -3;
+		try {
+			resultStatus = json.getInt("status");
+			switch (resultStatus) {
+			case 0:
+				onNotificationSuccess(json);
+				break;
+
+			default:
+				Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
+				break;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
 	
 	private void handleLatestNeedsResult(JSONObject json) {
 		int resultStatus = -3;
@@ -178,12 +215,16 @@ public class GroundActivity extends Activity {
 				break;
 
 			default:
-				Toast.makeText(this, new String(json.getString("message").getBytes("iso-8859-1"),"UTF-8"), Toast.LENGTH_SHORT).show();
+				Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
 				break;
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
+	}
+	
+	private void onNotificationSuccess(JSONObject json) {
+		Log.e("alen", json.toString());
 	}
 	
 	private void onLatestNeedsSuccess(JSONObject json) {
@@ -296,7 +337,19 @@ public class GroundActivity extends Activity {
 		// automatically handle clicks on the Home/Up button, so long
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
-		if (id == R.id.action_all && !viewAll) {
+		if (id == R.id.menu_new) {
+			Intent intent = new Intent(this, NewNeedActivity.class);
+			startActivity(intent);
+		} else if (id == R.id.menu_refresh) {
+			contentLayout.removeAllViews();
+			moreButton.setVisibility(View.GONE);
+			if (viewAll) {
+				offset = 0;
+				getLatestNeeds(NUM_PER_PAGE, 0, "");
+			} else {
+				getConcernNeeds();
+			}
+		} else if (id == R.id.action_all && !viewAll) {
 			viewAll = true;
 			searchButton.setClickable(true);
 			offset = 0;
@@ -310,7 +363,6 @@ public class GroundActivity extends Activity {
 			contentLayout.removeAllViews();
 			moreButton.setVisibility(View.GONE);
 			getConcernNeeds();
-			return true;
 		}
 		return super.onOptionsItemSelected(item);
 	}
