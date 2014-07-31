@@ -53,6 +53,7 @@ db.connect(function(db) {
   if (app.get('env') === 'development') {
     app.use(function(err, req, res, next) {
       res.status(err.status || 500);
+      console.log(err);
       res.render('error', {
         message: err.message,
         error: err
