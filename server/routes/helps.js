@@ -4,23 +4,9 @@ var async = require('async');
 var ObjectID = require('mongodb').ObjectID;
 var _ = require('underscore');
 var notification = require('../lib/notification');
-var db = require('../lib/db').getConnection();
-
-var validateHelp = function(help){
-  if (!help.title){
-    return '标题不能为空';
-  }
-  if (help.title.length > 30){
-    return '标题不能多于30个字';
-  }
-  if (!help.content || help.content.length < 10){
-    return '内容不能少于10个字';
-  }
-  if (help.content.length > 300){
-    return '内容不能多于300个字';
-  }
-  return false;
-};
+var Help = require('../models/help');
+var User = require('../models/user');
+var Comment = require('../models/comment');
 
 var getImages = function(files){
   if (!files){
@@ -42,7 +28,7 @@ var getImages = function(files){
 // add a help
 router.post('/help', function(req, res){
 
-  var error = validateHelp(req.body);
+  var error = Help.validateHelp(req.body);
   if (error){
     res.send({
       status: 1,
@@ -65,18 +51,8 @@ router.post('/help', function(req, res){
 
   help.images = getImages(req.files.images);
 
-  async.waterfall([
-    function(callback){
-      db.collection('helps', callback);
-    },
-
-    function(col, callback){
-      col.insert(help, callback);
-    }
-  ],
-
-  function(err, items){
-    if (err){
+  Help.insert(help, function(err, item){
+    if (err || !item){
       res.send({
         status: 3,
         message: '操作失败'
@@ -85,16 +61,15 @@ router.post('/help', function(req, res){
     else {
       res.send({
         status: 0,
-        help: items[0]
+        help: item
       });
-      notification.informNewHelp(items[0]);
+      notification.informNewHelp(item);
     }
   });
 });
 
 // delete a help
 router.delete('/help/:helpId', function(req, res){
-  var helps;
   var helpId;
 
   try{
@@ -108,20 +83,11 @@ router.delete('/help/:helpId', function(req, res){
     return;
   }
 
-  async.waterfall([
-    function(callback){
-      db.collection('helps', callback);
-    },
-
-    function(col, callback){
-      col.remove({
-        _id: helpId,
-        createdBy: req.session.userId
-      }, callback);
-    }
-  ],
-
-  function(err, numberOfRemovedDocs){
+  var selector = {
+    _id: helpId,
+    createdBy: req.session.userId
+  };
+  Help.remove(selector, function(err, numberOfRemovedDocs){
     if (err){
       res.send({
         status: 3,
@@ -156,17 +122,7 @@ router.get('/help/:helpId', function(req, res){
     return;
   }
 
-  async.waterfall([
-    function(callback){
-      db.collection('helps', callback);
-    },
-
-    function(col, callback){
-      col.findOne({_id: helpId}, callback);
-    }
-  ],
-
-  function(err, item){
+  Help.findOne({_id: helpId}, function(err, item){
     if (err){
       res.send({
         status: 3,
@@ -206,23 +162,13 @@ router.get('/help/:helpId/comments', function(req, res){
     offset: parseInt(req.query.offset) || 0
   };
 
-  async.waterfall([
-    function(callback){
-      db.collection('comments', callback);
+  Comment.find({helpId: helpId}, {
+    sort: {
+      createdAt: -1
     },
-
-    function(col, callback){
-      col.find({helpId: helpId}, {
-        sort: {
-          createdAt: -1
-        },
-        limit: query.limit,
-        skip: query.offset
-      }).toArray(callback);
-    }
-  ],
-
-  function(err, items){
+    limit: query.limit,
+    skip: query.offset
+  }, function(err, items){
     if (err){
       res.send({
         status: 3,
@@ -238,18 +184,18 @@ router.get('/help/:helpId/comments', function(req, res){
   });
 });
 
-var getHelps = function(selector, options, res){
-  async.waterfall([
-    function(callback){
-      db.collection('helps', callback);
+var getOptions = function(req){
+  return {
+    sort: {
+      createdAt: -1
     },
+    limit: parseInt(req.query.limit) || 10,
+    skip: parseInt(req.query.offset) || 0
+  };
+};
 
-    function(col, callback){
-      col.find(selector, options).toArray(callback);
-    }
-  ],
-
-  function(err, items){
+var getHelps = function(selector, options, res){
+  Help.find(selector, options, function(err, items){
     if (err){
       res.send({
         status: 3,
@@ -279,29 +225,18 @@ router.get('/helps/user/:userId', function(req, res){
     return;
   }
 
+  var options = getOptions(req);
   var selector = {
     createdBy: userId
   };
-  var options = {
-    sort: {
-      createdAt: -1
-    },
-    limit: parseInt(req.query.limit) || 10,
-    skip: parseInt(req.query.offset) || 0
-  };
+
   getHelps(selector, options, res);
 });
 
 // get the latest helps
 router.get('/helps/latest', function(req, res){
   var selector = {};
-  var options = {
-    sort: {
-      createdAt: -1
-    },
-    limit: parseInt(req.query.limit) || 10,
-    skip: parseInt(req.query.offset) || 0
-  };
+  var options = getOptions(req);
   if (req.query.tags){
     if (req.query.tags instanceof Array){
       selector.tags = {
@@ -317,25 +252,9 @@ router.get('/helps/latest', function(req, res){
 
 // get the helps added by the persons I concerns
 router.get('/helps/concerns', function(req, res){
-  var options = {
-    sort: {
-      createdAt: -1
-    },
-    limit: parseInt(req.query.limit) || 10,
-    skip: parseInt(req.query.offset) || 0
-  };
+  var options = getOptions(req);
 
-  async.waterfall([
-    function(callback){
-      db.collection('users', callback);
-    },
-
-    function(col, callback){
-      col.findOne({_id: req.session.userId}, callback);
-    }
-  ],
-
-  function(err, item){
+  User.findOne({_id: req.session.userId}, function(err, item){
     if (err){
       res.send({
         status: 3,
@@ -357,18 +276,14 @@ router.get('/helps/concerns', function(req, res){
 router.get('/helps/commented', function(req, res){
   async.waterfall([
     function(callback){
-      db.collection('comments', callback);
-    },
-
-    function(col, callback){
-      col.find({createdBy: req.session.userId}, {
+      Comment.find({createdBy: req.session.userId}, {
         sort: {
           createdAt: -1
         },
         fields: {
           helpId: 1
         }
-      }).toArray(callback);
+      }, callback);
     },
 
     function(comments, callback){
@@ -379,11 +294,11 @@ router.get('/helps/commented', function(req, res){
         });
       }
       else{
-        var helpIds = _.map(comments, function(comment){
+        var helpIds = comments.map(function(comment){
           return comment.helpId.toString();
         });
         helpIds = _.uniq(helpIds);
-        var ids = _.map(helpIds, function(id){
+        var ids = helpIds.map(function(id){
           return ObjectID(id);
         });
         var limit = parseInt(req.query.limit) || 10;
@@ -394,17 +309,8 @@ router.get('/helps/commented', function(req, res){
             $in: ids
           }
         };
-        async.waterfall([
-          function(callback){
-            db.collection('helps', callback);
-          },
 
-          function(col, callback){
-            col.find(selector).toArray(callback);
-          }
-        ],
-
-        function(err, helps){
+        Help.find(selector, {}, function(err, helps){
           if (err){
             callback(err);
           }
@@ -435,7 +341,7 @@ router.get('/helps/commented', function(req, res){
   });
 });
 
-var upDown = function(req, res, operation){
+var vote = function(req, res, operation){
   var helpId;
   try{
     helpId = ObjectID(req.params.helpId);
@@ -448,15 +354,9 @@ var upDown = function(req, res, operation){
     return;
   }
 
-  var helps;
   async.waterfall([
     function(callback){
-      db.collection('helps', callback);
-    },
-
-    function(col, callback){
-      col.findOne({_id: helpId}, callback);
-      helps = col;
+      Help.findOne({_id: helpId}, callback);
     },
 
     function(item, callback){
@@ -467,47 +367,19 @@ var upDown = function(req, res, operation){
         });
       }
       else {
-        var up = item.up.map(function(id){
-          return id.toString();
-        });
-        var down = item.down.map(function(id){
-          return id.toString();
-        });
-        var userId = req.session.userId.toString();
-        if (up.indexOf(userId) == -1 && down.indexOf(userId) == -1){
-          callback();
-        }
-        else {
-          var message;
-          if (up.indexOf(userId) != -1){
-            if (operation == 'up'){
-              message = '已顶，不能重复操作';
-            }
-            else {
-              message = '已顶，不能踩';
-            }
-          }
-          else {
-            if (operation == 'up'){
-              message = '已踩，不能顶';
-            }
-            else {
-              message = '已踩，不能重复操作';
-            }
-          }
-
+        var hasVoted = Help.hasVoted(item, req.session.userId);
+        if (hasVoted){
           res.send({
             status: 5,
-            message: message
+            message: hasVoted == 1 ? '已顶过' : '已踩过'
           });
         }
+        else {
+          var updater = { $addToSet: {} };
+          updater.$addToSet[operation] = req.session.userId;
+          Help.update({_id: helpId}, updater, callback);
+        }
       }
-    },
-
-    function(callback){
-      var update = { $addToSet: {} };
-      update.$addToSet[operation] = req.session.userId;
-      helps.update({_id: helpId}, update, callback);
     }
   ],
 
@@ -527,11 +399,11 @@ var upDown = function(req, res, operation){
 };
 
 router.put('/help/:helpId/up', function(req, res){
-  upDown(req, res, 'up');
+  vote(req, res, 'up');
 });
 
 router.put('/help/:helpId/down', function(req, res){
-  upDown(req, res, 'down');
+  vote(req, res, 'down');
 });
 
 module.exports = router;

@@ -3,7 +3,8 @@ var router = express.Router();
 var async = require('async');
 var ObjectID = require('mongodb').ObjectID;
 var notification = require('../lib/notification');
-var db = require('../lib/db').getConnection();
+var Comment = require('../models/comment');
+var Help = require('../models/help');
 
 router.get('/comment/:commentId', function(req, res){
   var commentId;
@@ -18,17 +19,7 @@ router.get('/comment/:commentId', function(req, res){
     return;
   }
 
-  async.waterfall([
-    function(callback){
-      db.collection('helps', callback);
-    },
-
-    function(col, callback){
-      col.findOne({_id: commentId}, callback);
-    }
-  ],
-
-  function(err, item){
+  Comment.findOne({_id: commentId}, function(err, item){
     if (err){
       res.send({
         status: 3,
@@ -50,39 +41,48 @@ router.get('/comment/:commentId', function(req, res){
   });
 });
 
-var modifyCommentCount = function(helpId, n){
-  async.waterfall([
-    function(callback){
-      db.collection('helps', callback);
-    },
-
-    function(col, callback){
-      col.update({_id: helpId}, {
-        $inc: {
-          commentCount: n
-        }
-      }, callback);
-    }
-  ],
-
-  function(err, numOfAffectedDocs){
-
-  });
-};
-
 var insertComment = function(req, res, comment){
   async.waterfall([
     function(callback){
-      db.collection('comments', callback);
+      Help.findOne({_id: comment.helpId}, callback);
     },
 
-    function(col, callback){
-      col.insert(comment, callback);
+    function(item, callback){
+      if (!item){
+        res.send({
+          status: 2,
+          message: '所评论的求助信息不存在'
+        });
+      }
+      else if (!comment.commentId){
+        callback(null);
+      }
+      else {
+        Comment.findOne({_id: comment.commentId}, function(err, item){
+          if (err){
+            callback(err);
+          }
+          else if (!item){
+            res.send({
+              status: 2,
+              message: '所回复评论不存在'
+            });
+          }
+          else {
+            comment.replyTo = item.createdBy;
+            callback(null);
+          }
+        });
+      }
+    },
+
+    function(callback){
+      Comment.insert(comment, callback);
     }
   ],
 
-  function(err, items){
-    if (err || !items){
+  function(err, item){
+    if (err || !item){
       res.send({
         status: 3,
         message: '操作失败'
@@ -91,14 +91,12 @@ var insertComment = function(req, res, comment){
     else {
       res.send({
         status: 0,
-        comment: items[0]
+        comment: item
       });
 
-      modifyCommentCount(comment.helpId, 1);
-
-      notification.informNewComment(items[0]);
-      if (items[0].commentId){
-        notification.informNewReply(items[0]);
+      notification.informNewComment(item);
+      if (item.commentId){
+        notification.informNewReply(item);
       }
     }
   });
@@ -120,7 +118,7 @@ router.post('/comment/help/:helpId', function(req, res){
   var commentId;
   if (req.body.commentId){
     try{
-      commentId = ObjectID(req.bdoy.commentId);
+      commentId = ObjectID(req.body.commentId);
     }
     catch(e){
       res.send({
@@ -148,41 +146,8 @@ router.post('/comment/help/:helpId', function(req, res){
     secret: !!parseInt(req.body.secret),
     thanked: false
   };
-  if (!commentId){
-    insertComment(req, res, comment);
-  }
-  else {
-    comment.commentId = commentId;
-    async.waterfall([
-      function(callback){
-        db.collection('comments', callback);
-      },
 
-      function(col, callback){
-        col.findOne({_id: comment.commentId}, callback);
-      }
-    ],
-
-    function(err, item){
-      if (err){
-        res.send({
-          status: 3,
-          message: '操作失败'
-        });
-      }
-      else if (!item){
-        res.send({
-          status: 2,
-          message: '所回复评论不存在'
-        });
-      }
-      else {
-        comment.replyTo = item.createdBy;
-        insertComment(req, res, comment);
-      }
-    });
-  }
-
+  insertComment(req, res, comment);
 });
 
 router.delete('/comment/:commentId', function(req, res){
@@ -202,18 +167,13 @@ router.delete('/comment/:commentId', function(req, res){
 
   async.waterfall([
     function(callback){
-      db.collection('comments', callback);
-    },
-
-    function(col, callback){
-      col.findOne({_id: commentId}, callback);
-      comments = col;
+      Comment.findOne({_id: commentId}, callback);
     },
 
     function(item, callback){
       if (item){
         helpId = item.helpId;
-        callback(null);
+        Comment.remove({_id: commentId}, callback);
       }
       else {
         res.send({
@@ -222,10 +182,6 @@ router.delete('/comment/:commentId', function(req, res){
         });
       }
     },
-
-    function(callback){
-      comments.remove({_id: commentId}, callback);
-    }
   ],
 
   function(err, numberOfRemovedDocs){
@@ -245,8 +201,7 @@ router.delete('/comment/:commentId', function(req, res){
       res.send({
         status: 0
       });
-
-      modifyCommentCount(helpId, -1);
+      Help.decreaseCommentCount(helpId, function(){});
     }
   });
 });
@@ -263,17 +218,11 @@ router.post('/comment/:commentId/thanks', function(req, res){
     return;
   }
 
-  var comments;
   var comment;
 
   async.waterfall([
     function(callback){
-      db.collection('comments', callback);
-    },
-
-    function(col, callback){
-      col.findOne({_id: commentId}, callback);
-      comments = col;
+      Comment.findOne({_id: commentId}, callback);
     },
 
     function(item, callback){
@@ -291,15 +240,11 @@ router.post('/comment/:commentId/thanks', function(req, res){
       }
       else {
         comment = item;
-        db.collection('helps', callback);
+        Help.findOne({
+          _id: comment.helpId,
+          createdBy: req.session.userId
+        }, callback);
       }
-    },
-
-    function(col, callback){
-      col.findOne({
-        _id: comment.helpId,
-        createdBy: req.session.userId
-      }, callback);
     },
 
     function(item, callback){
@@ -310,7 +255,7 @@ router.post('/comment/:commentId/thanks', function(req, res){
         });
       }
       else {
-        comments.update({_id: commentId}, {
+        Comment.update({_id: commentId}, {
           $set: {
             thanked: true
           }
