@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var ObjectID = require('mongodb').ObjectID;
-var notification = require('../lib/notification');
+var Notification = require('../models/notification');
 var User = require('../models/user');
 
 router.get('/concerns', function(req, res){
@@ -120,7 +120,7 @@ router.post('/concern/:userId', function(req, res){
       res.send({
         status: 0
       });
-      notification.informNewConcerner(req.session.userId, userId);
+      Notification.informNewConcerner(req.session.userId, userId);
     }
   });
 });

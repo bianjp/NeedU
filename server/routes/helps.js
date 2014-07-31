@@ -3,7 +3,7 @@ var router = express.Router();
 var async = require('async');
 var ObjectID = require('mongodb').ObjectID;
 var _ = require('underscore');
-var notification = require('../lib/notification');
+var Notification = require('../models/notification');
 var Help = require('../models/help');
 var User = require('../models/user');
 var Comment = require('../models/comment');
@@ -63,7 +63,7 @@ router.post('/help', function(req, res){
         status: 0,
         help: item
       });
-      notification.informNewHelp(item);
+      Notification.informNewHelp(item);
     }
   });
 });

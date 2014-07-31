@@ -2,20 +2,10 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var ObjectID = require('mongodb').ObjectID;
-var db = require('../lib/db').getConnection();
+var Notification = require('../models/notification');
 
 router.get('/notifications', function(req, res){
-  async.waterfall([
-    function(callback){
-      db.collection('notifications', callback);
-    },
-
-    function(col, callback){
-      col.find({userId: req.session.userId}).toArray(callback);
-    }
-  ],
-
-  function(err, items){
+  Notification.find({userId: req.session.userId}, {}, function(err, items){
     if (err){
       res.send({
         status: 3,
@@ -32,17 +22,7 @@ router.get('/notifications', function(req, res){
 });
 
 router.delete('/notifications/all', function(req, res){
-  async.waterfall([
-    function(callback){
-      db.collection('notifications', callback);
-    },
-
-    function(col, callback){
-      col.remove({userId: req.session.userId}, callback);
-    }
-  ],
-
-  function(err, numOfRemovedDocs, result){
+  Notification.remove({userId: req.session.userId}, function(err, result){
     if (err){
       res.send({
         status: 3,
@@ -70,17 +50,7 @@ router.delete('/notifications/:id', function(req, res){
     return;
   }
 
-  async.waterfall([
-    function(callback){
-      db.collection('notifications', callback);
-    },
-
-    function(col, callback){
-      col.remove({_id: notificationId, userId: req.session.userId}, callback);
-    }
-  ],
-
-  function(err, numOfRemovedDocs, result){
+  Notification.remove({_id: notificationId, userId: req.session.userId}, function(err, numOfRemovedDocs, result){
     if (err){
       res.send({
         status: 3,

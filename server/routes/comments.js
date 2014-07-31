@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var ObjectID = require('mongodb').ObjectID;
-var notification = require('../lib/notification');
+var Notification = require('../models/notification');
 var Comment = require('../models/comment');
 var Help = require('../models/help');
 
@@ -94,9 +94,9 @@ var insertComment = function(req, res, comment){
         comment: item
       });
 
-      notification.informNewComment(item);
+      Notification.informNewComment(item);
       if (item.commentId){
-        notification.informNewReply(item);
+        Notification.informNewReply(item);
       }
     }
   });
