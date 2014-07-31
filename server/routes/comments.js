@@ -117,7 +117,7 @@ router.post('/comment/help/:helpId', function(req, res){
   }
 
   var commentId;
-  if (!req.body.commentId){
+  if (req.body.commentId){
     try{
       commentId = ObjectID(req.bdoy.commentId);
     }
