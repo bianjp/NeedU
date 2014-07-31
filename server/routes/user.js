@@ -1,99 +1,13 @@
 var express = require('express');
 var router = express.Router();
 var async = require('async');
-var crypto = require('crypto');
 var ObjectID = require('mongodb').ObjectID;
-var _ = require('underscore');
-var db = require('../lib/db').getConnection();
-
-var generateSalt = function(){
-  return crypto.randomBytes(10).toString('hex');
-};
-
-var encryptPassword = function(origin, salt){
-  var sha1 = crypto.createHash('sha1');
-  sha1.update(origin + salt);
-  return sha1.digest('hex');
-};
-
-// generate password field of user
-var generatePassword = function(origin){
-  var salt = generateSalt();
-  return {
-    identity: encryptPassword(origin, salt),
-    salt: salt
-  };
-};
-
-var createSession = function(userId, callback){
-  async.waterfall([
-    function(callback){
-      db.collection('sessions', callback);
-    },
-
-    function(col, callback){
-      col.insert({
-        userId: userId,
-        createdAt: new Date()
-      }, callback);
-    }
-  ], function(err, items){  // return array, even when insert a single document
-      if (err){
-        callback(err);
-      }
-      else {
-        callback(null, items[0]._id);
-      }
-  });
-};
-
-var validateProfile = function(profile, isUpdating){
-  var requiredFields = {
-    'school': '学校',
-    'major': '专业',
-    'schoolYear': '入学年份',
-    'name': '名称',
-    'gender': '性别'
-  };
-
-  var key;
-  if (isUpdating){  //update profile
-    for (key in requiredFields){
-      if (profile[key] !== undefined && !profile[key]){
-        return requiredFields[key] + '不能为空';
-      }
-    }
-  }
-  else {
-    for (key in requiredFields){
-      if (!profile[key]){
-        return requiredFields[key] + '不能为空';
-      }
-    }
-  }
-  return false;
-};
-
-var validateUsername = function(username){
-  if (!username){
-    return '学号不能为空';
-  }
-  else if (!/^[a-zA-Z\d]+$/.test(username)){
-    return '学号错误';
-  }
-  return false;
-};
-
-var validatePassword = function(password){
-  if (password.length < 6){
-    return '密码不能少于6位';
-  }
-  return false;
-};
+var User = require('../models/user');
 
 //sign up
 router.post('/user', function(req, res){
-  var error = validateUsername(req.body.username) || validatePassword(req.body.password);
+  req.body.username = req.body.username && req.body.username.trim();
+  var error = User.validateUsername(req.body.username) || User.validatePassword(req.body.password);
   if (error){
     res.send({
       status: 1,
@@ -105,7 +19,7 @@ router.post('/user', function(req, res){
   var user = {
     username: req.body.username,
     createdAt: new Date(),
-    password: generatePassword(req.body.password),
+    password: User.generatePassword(req.body.password),
     profile: {
       school: req.body.school || null,
       major: req.body.major || null,
@@ -123,7 +37,7 @@ router.post('/user', function(req, res){
     concerns: []
   };
 
-  error = validateProfile(user.profile);
+  error = User.validateProfile(user.profile);
   if (error){
     res.send({
       status: 1,
@@ -134,35 +48,27 @@ router.post('/user', function(req, res){
 
   async.waterfall([
     function(callback){
-      db.collection('users', callback);
+      User.findOne({username: req.body.username}, callback);
     },
 
-    function(col, callback){
-      col.findOne({username: req.body.username}, function(err, item){
-        if (err){
-          callback(err);
-        }
-        else if (item){
-          res.send({
-            status: 1,
-            message: '用户名已存在'
-          });
-        }
-        else {
-          col.insert(user, callback);
-        }
-      });
-    },
-
-    function(items, callback){
-      user = items[0];
-      createSession(items[0]._id, callback);
+    function(item, callback){
+      if (item){
+        res.send({
+          status: 1,
+          message: '用户名已存在'
+        });
+      }
+      else {
+        User.signup(user, callback);
+      }
     }
-  ], function(err, sid){
-    if (err || !sid){
+  ],
+
+  function(err, user, sid){
+    if (err){
       res.send({
         status: 3,
-        message: '数据库操作失败'
+        message: '操作失败'
       });
     }
     else {
@@ -180,43 +86,23 @@ router.post('/user', function(req, res){
 
 //sign in
 router.post('/user/authentication', function(req, res){
-  async.waterfall([
-    function(callback){
-      db.collection('users', callback);
-    },
-
-    function(col, callback){
-      col.findOne({username: req.body.username}, callback);
+  User.signin(req.body.username, req.body.password, function(err, user, sid){
+    if (err){
+      res.send({
+        status: 1,
+        message: '用户名或密码错误'
+      });
     }
-  ], function(err, item){
-      if (err || !item ||
-          encryptPassword(req.body.password, item.password.salt) != item.password.identity){
-        res.send({
-          status: 1,
-          message: '用户名或密码错误'
-        });
-      }
-      else {
-        delete item.password;
-        delete item.concernedBy;
-        delete item.concerns;
-        var user = item;
-        createSession(user._id, function(err, sid){
-          if (err){
-            res.send({
-              status: 3,
-              message: '登录失败'
-            });
-          }
-          else {
-            res.send({
-              status: 0,
-              sid: sid,
-              user: user
-            });
-          }
-        });
-      }
+    else {
+      delete user.password;
+      delete user.concernedBy;
+      delete user.concerns;
+      res.send({
+        status: 0,
+        sid: sid,
+        user: user
+      });
+    }
   });
 });
 
@@ -234,56 +120,47 @@ router.get('/user/:userId', function(req, res){
     return;
   }
 
-  async.waterfall([
-    function(callback){
-      db.collection('users', callback);
-    },
-
-    function(col, callback){
-      col.findOne({_id: userId}, callback);
+  User.findOne({_id: userId}, function(err, item){
+    if (err){
+      res.send({
+        status: 3,
+        message: '操作失败'
+      });
     }
-  ], function(err, item){
-      if (err){
-        res.send({
-          status: 1,
-          message: '数据库操作失败'
-        });
-      }
-      else if (!item){
-        res.send({
-          status: 2,
-          message: '该用户不存在'
-        });
-      }
-      else {
-        var concernedBy = _.map(item.concernedBy, function(id){
-          return id.toString();
-        });
-        item.profile._id = item._id;
-        res.send({
-          status: 0,
-          profile: item.profile,
-          concerned: concernedBy.indexOf(req.session.userId.toString()) != -1
-        });
-      }
+    else if (!item){
+      res.send({
+        status: 2,
+        message: '该用户不存在'
+      });
+    }
+    else {
+      var concernedBy = item.concernedBy.map(function(id){
+        return id.toString();
+      });
+      item.profile._id = item._id;
+      res.send({
+        status: 0,
+        profile: item.profile,
+        concerned: concernedBy.indexOf(req.session.userId.toString()) != -1
+      });
+    }
   });
 });
 
-
-var getUpdatedProfile = function(body){
-  var update = {};
+var getUpdater = function(body){
+  var updater = {};
   var fields = ['school', 'major', 'schoolYear', 'name', 'gender', 'birthday', 'phone', 'wechat', 'QQ', 'description'];
   for (var i = 0; i < fields.length; i++){
     if (body[fields[i]] !== undefined){
-      update['profile.' + fields[i]] = body[fields[i]];
+      updater['profile.' + fields[i]] = body[fields[i]];
     }
   }
-  return update;
+  return {$set: updater};
 };
 
 //update profile
 router.put('/user', function(req, res){
-  var error = validateProfile(req.body);
+  var error = User.validateProfile(req.body, true);
   if (error){
     res.send({
       status: 1,
@@ -292,30 +169,19 @@ router.put('/user', function(req, res){
     return;
   }
 
-  var update = getUpdatedProfile(req.body, true);
-  var users;
+  var updater = getUpdater(req.body);
 
   async.waterfall([
     function(callback){
-      db.collection('users', callback);
-    },
-
-    function(col, callback){
-      users = col;
-      col.update({_id: req.session.userId}, {
-        $set: update
-      }, callback);
+      User.update({_id: req.session.userId}, updater, callback);
     },
 
     function(numOfAffectedDocs, result, callback){
-      if (numOfAffectedDocs){
-        users.findOne({_id: req.session.userId}, callback);
+      if (!numOfAffectedDocs){
+        callback(true);
       }
       else {
-        res.send({
-          status: 3,
-          message: '更新失败'
-        });
+        User.findOne({_id: req.session.userId}, callback);
       }
     }
   ],
@@ -352,41 +218,18 @@ router.put('/user/photo', function(req, res){
   async.parallel([
     function(callback){
       var fs = require('fs');
-      fs.rename(file.path, 'public/photos/' + filename, function(err){
-        if (err){
-          callback(err);
-        }
-        else {
-          callback(null, true);
-        }
-      });
+      fs.rename(file.path, 'public/photos/' + filename, callback);
     },
 
     function(callback){
-      async.waterfall([
-        function(callback){
-          db.collection('users', callback);
-        },
-
-        function(col, callback){
-          col.update({_id: req.session.userId}, {
-            $set: {
-              'profile.photo': filepath
-            }
-          }, callback);
+      User.update({_id: req.session.userId}, {
+        $set: {
+         'profile.photo': filepath
         }
-      ],
-
-      function(err, result){
-        if (err){
-          callback(err);
-        }
-        else {
-          callback(null, result);
-        }
-      });
+      }, callback);
     }
   ],
+
   function(err, result){
     if (err){
       res.send({
@@ -405,57 +248,49 @@ router.put('/user/photo', function(req, res){
 
 //update password
 router.put('/user/password', function(req, res){
-  var error = validatePassword(req.body.password);
+  var error = User.validatePassword(req.body.password);
   if (error){
     res.send({
       status: 1,
       message: error
     });
+    return;
   }
 
-  var collection;
   async.waterfall([
     function(callback){
-      db.collection('users', callback);
+      User.checkPassword(req.session.userId, req.body.oldPassword, callback);
     },
 
-    function(col, callback){
-      col.findOne(req.session.userId, callback);
-      collection = col;
-    },
-
-    function(item, callback){
-      if (encryptPassword(req.body.oldPassword, item.password.salt) != item.password.identity){
+    function(result, callback){
+      if (!result){
         res.send({
           status: 1,
           message: '密码错误'
         });
       }
-      else{
-        callback(null, collection);
-      }
-    },
-
-    function(col, callback){
-      // update(userId, ...) would cause error
-      col.update({_id: req.session.userId}, {
-        $set: {
-          password: generatePassword(req.body.password)
-        }
-      }, callback);
-    }
-  ], function(err, result){  // result is num of docs affected?
-      if (result){
-        res.send({
-          status: 0
-        });
-      }
       else {
-        res.send({
-          status: 1,
-          message: '操作失败'
-        });
+        User.update({_id: req.session.userId}, {
+          $set: {
+            password: User.generatePassword(req.body.password)
+          }
+        }, callback);
       }
+    }
+  ],
+
+  function(err, numOfAffectedDocs){
+    if (numOfAffectedDocs){
+      res.send({
+        status: 0
+      });
+    }
+    else {
+      res.send({
+        status: 1,
+        message: '操作失败'
+      });
+    }
   });
 });
 
