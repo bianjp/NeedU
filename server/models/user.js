@@ -40,6 +40,18 @@ module.exports = {
     ], callback);
   },
 
+  find: function(selector, options, callback){
+    async.waterfall([
+      function(callback){
+        db.collection('users', callback);
+      },
+
+      function(col, callback){
+        col.find(selector, options).toArray(callback);
+      }
+    ], callback);
+  },
+
   insert: function(user, callback){
     async.waterfall([
       function(callback){
@@ -185,5 +197,47 @@ module.exports = {
       identity: encryptPassword(origin, salt),
       salt: salt
     };
+  },
+
+  addConcern: function(userId, concernId, callback){
+    var User = this;
+    async.parallel([
+      function(callback){
+        User.update({_id: concernId}, {
+          $addToSet: {
+            concernedBy: userId
+          }
+        }, callback);
+      },
+
+      function(callback){
+        User.update({_id: userId}, {
+          $addToSet: {
+            concerns: concernId
+          }
+        }, callback);
+      }
+    ], callback);
+  },
+
+  removeConcern: function(userId, concernId, callback){
+    var User = this;
+    async.parallel([
+      function(callback){
+        User.update({_id: userId}, {
+          $pull: {
+            concerns: concernId
+          }
+        }, callback);
+      },
+
+      function(callback){
+        User.update({_id: concernId}, {
+          $pull: {
+            concernedBy: userId
+          }
+        }, callback);
+      }
+    ], callback);
   }
 };

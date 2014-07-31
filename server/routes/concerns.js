@@ -1,22 +1,15 @@
 var express = require('express');
 var router = express.Router();
 var async = require('async');
-var crypto = require('crypto');
 var ObjectID = require('mongodb').ObjectID;
-var _ = require('underscore');
 var notification = require('../lib/notification');
-var db = require('../lib/db').getConnection();
+var User = require('../models/user');
 
 router.get('/concerns', function(req, res){
   var users;
   async.waterfall([
     function(callback){
-      db.collection('users', callback);
-    },
-
-    function(col, callback){
-      col.findOne(req.session.userId, callback);
-      users = col;
+      User.findOne(req.session.userId, callback);
     },
 
     function(item, callback){
@@ -38,7 +31,7 @@ router.get('/concerns', function(req, res){
     },
 
     function(concerns, callback){
-      users.find({
+      User.find({
         _id: {
           $in: concerns
         }
@@ -47,41 +40,48 @@ router.get('/concerns', function(req, res){
         fields: {
           profile: 1
         }
-      }).toArray(callback);
+      }, callback);
     },
-  ], function(err, users){
-      if (err){
-        res.send({
-          status: 3,
-          message: '操作失败'
-        });
-      }
-      else {
-        var profiles = [];
-        for (var i = 0, length = users.length; i < length; i++){
-          profiles[i] = users[i].profile;
-          profiles[i]._id = users[i]._id;
-        }
+  ],
 
-        res.send({
-          status: 0,
-          users: profiles
-        });
+  function(err, users){
+    if (err){
+      res.send({
+        status: 3,
+        message: '操作失败'
+      });
+    }
+    else {
+      var profiles = [];
+      for (var i = 0, length = users.length; i < length; i++){
+        profiles[i] = users[i].profile;
+        profiles[i]._id = users[i]._id;
       }
+
+      res.send({
+        status: 0,
+        users: profiles
+      });
+    }
   });
 });
 
-
 router.post('/concern/:userId', function(req, res){
-  var users;
+  var userId;
+  try{
+    userId = ObjectID(req.params.userId);
+  }
+  catch(e){
+    res.send({
+      status: 1,
+      message: '参数错误'
+    });
+    return;
+  }
+
   async.waterfall([
     function(callback){
-      db.collection('users', callback);
-    },
-
-    function(col, callback){
-      col.findOne(ObjectID(req.params.userId), callback);
-      users = col;
+      User.findOne({_id: userId}, callback);
     },
 
     function(item, callback){
@@ -92,7 +92,7 @@ router.post('/concern/:userId', function(req, res){
         });
       }
       else{
-        var concernedBy = _.map(item.concernedBy, function(id){
+        var concernedBy = item.concernedBy.map(function(id){
           return id.toString();
         });
 
@@ -103,55 +103,41 @@ router.post('/concern/:userId', function(req, res){
           });
         }
         else {
-         callback();
+          User.addConcern(req.session.userId, userId, callback);
         }
       }
-    },
+    }
+  ],
 
-    function(callback){
-      async.parallel([
-        function(callback){
-          users.update({_id: ObjectID(req.params.userId)}, {
-            $addToSet: {
-              concernedBy: req.session.userId
-            }
-          }, callback);
-        },
-
-        function(callback){
-          users.update({_id: req.session.userId}, {
-            $addToSet: {
-              concerns: ObjectID(req.params.userId)
-            }
-          }, callback);
-        }
-      ], function(err, results){
-          if (err){
-            res.send({
-              status: 3,
-              message: '操作失败'
-            });
-          }
-          else {
-            res.send({
-              status: 0
-            });
-            notification.informNewConcerner(req.session.userId, ObjectID(req.params.userId));
-          }
+  function(err, results){
+    if (err){
+      res.send({
+        status: 3,
+        message: '操作失败'
       });
     }
-  ], function(err){
-      if (err){
-        res.send({
-          status: 3,
-          message: '操作失败'
-        });
-      }
+    else {
+      res.send({
+        status: 0
+      });
+      notification.informNewConcerner(req.session.userId, userId);
+    }
   });
 });
 
 router.delete('/concern/:userId', function(req, res){
-  var users;
+  var userId;
+  try{
+    userId = ObjectID(req.params.userId);
+  }
+  catch(e){
+    res.send({
+      status: 1,
+      message: '参数错误'
+    });
+    return;
+  }
+
   async.waterfall([
     function(callback){
       db.collection('users', callback);
@@ -163,54 +149,33 @@ router.delete('/concern/:userId', function(req, res){
     },
 
     function(item, callback){
-      var concerns = _.map(item.concerns, function(id){
+      var concerns = item.concerns.map(function(id){
         return id.toString();
       });
-      if (concerns.indexOf(req.params.userId) == -1){
+      if (concerns.indexOf(userId.toString()) == -1){
         res.send({
           status: 1,
           message: '尚未关注该用户'
         });
       }
       else {
-        async.parallel([
-          function(callback){
-            users.update({_id: req.session.userId}, {
-              $pull: {
-                concerns: ObjectID(req.params.userId)
-              }
-            }, callback);
-          },
-
-          function(callback){
-            users.update({_id: ObjectID(req.params.userId)}, {
-              $pull: {
-                concernedBy: req.session.userId
-              }
-            }, callback);
-          }
-        ], function(err, results){
-            if (err){
-              res.send({
-                status: 3,
-                message: '操作失败'
-              });
-            }
-            else {
-              res.send({
-                status: 0
-              });
-            }
-        });
+        User.removeConcern(req.session.userId, userId, callback);
       }
     }
-  ], function(err){
-      if (err){
-        res.send({
-          status: 3,
-          message: '操作失败'
-        });
-      }
+  ],
+
+  function(err){
+    if (err){
+      res.send({
+        status: 3,
+        message: '操作失败'
+      });
+    }
+    else {
+      res.send({
+        status: 0
+      });
+    }
   });
 });
 
