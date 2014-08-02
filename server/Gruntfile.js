@@ -95,8 +95,10 @@ module.exports = function(grunt){
     var db = require('./lib/db');
     var done = this.async();
 
-    db.clear(function(){
-      done();
+    db.connect(function(){
+      db.clear(function(){
+        done();
+      });
     });
   });
 
@@ -104,8 +106,10 @@ module.exports = function(grunt){
     var db = require('./lib/db');
     var done = this.async();
 
-    db.initialize(function(){
-      done();
+    db.connect(function(){
+      db.initialize(function(){
+        done();
+      });
     });
   });
 
