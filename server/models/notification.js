@@ -148,6 +148,7 @@ module.exports = {
   },
 
   informNewReply: function(comment){
+    var Notification = this;
     getUserName(comment.createdBy, function(err, authorName){
       if (err){
         callback(err);
@@ -174,6 +175,7 @@ module.exports = {
   },
 
   informNewConcerner: function(concernerId, userId){
+    var Notification = this;
     getUserName(concernerId, function(err, name){
       if (err){
         callback(err);
