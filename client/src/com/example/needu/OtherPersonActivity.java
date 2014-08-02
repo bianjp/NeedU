@@ -8,6 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -26,6 +27,7 @@ public class OtherPersonActivity extends Activity {
 	private String followUrl = Network.SERVER + "/concern/";
 	private String userId;
 	private String sessionId;
+	private String studentId;
 	private static final int MSG_GET_INFO = 201;
 	private static final int MSG_GET_PHOTO = 202;
 	private static final int MSG_FOLLOW = 203;
@@ -55,6 +57,7 @@ public class OtherPersonActivity extends Activity {
 		
 		SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
 		sessionId = cookies.getString("sessionId", "");
+		studentId = cookies.getString("studentId", "");
 		userId = getIntent().getStringExtra("userId");
 		initViews();
 		getPersonalData();
@@ -66,6 +69,9 @@ public class OtherPersonActivity extends Activity {
 		nameText = (TextView)findViewById(R.id.name);
 		collegeText = (TextView)findViewById(R.id.college);
 		followButton = (Button)findViewById(R.id.follow);
+		if (userId.equals(studentId)) {
+			followButton.setText("编辑资料");
+		}
 		
 		descriptionText = (TextView)findViewById(R.id.personal_description);
 		name2Text = (TextView)findViewById(R.id.name2);
@@ -253,7 +259,10 @@ public class OtherPersonActivity extends Activity {
 				
 				@Override
 				public void onClick(View v) {
-					if (!concerned) {
+					if (userId.equals(studentId)) {
+						Intent intent = new Intent(OtherPersonActivity.this, ModifyInfoActivity.class);
+						startActivity(intent);
+					} else if (!concerned) {
 						follow();
 					} else {
 						cancel();

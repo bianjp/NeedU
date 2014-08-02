@@ -15,6 +15,7 @@ public class MessageTipsActivity extends Activity {
 	private Button finishButton;
 	private RadioButton ringButton;
 	private RadioButton vibrateButton;
+	private SharedPreferences cookies;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +25,7 @@ public class MessageTipsActivity extends Activity {
 		ActionBar actionBar = getActionBar();
 	    actionBar.setDisplayHomeAsUpEnabled(true);
 	    
+	    cookies = getSharedPreferences("cookies", MODE_PRIVATE);
 	    initViews();
 	}
 	
@@ -32,20 +34,27 @@ public class MessageTipsActivity extends Activity {
 		ringButton = (RadioButton)findViewById(R.id.modeRadioButton01);
 		vibrateButton = (RadioButton)findViewById(R.id.modeRadioButton02);
 		
+		String mode = cookies.getString("mode", "");
+		if (mode.equals("ring")) {
+			ringButton.setChecked(true);
+		} else if (mode.equals("vibrate")) {
+			vibrateButton.setChecked(true);
+		}
+		
 		finishButton.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-				SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
 				Editor editor = cookies.edit();
 				if (ringButton.isChecked()) {
 					editor.putString("mode", "ring");
+					Toast.makeText(MessageTipsActivity.this, "设置成功", Toast.LENGTH_SHORT).show();
 				} else if (vibrateButton.isChecked()) {
 					editor.putString("mode", "vibrate");
+					Toast.makeText(MessageTipsActivity.this, "设置成功", Toast.LENGTH_SHORT).show();
 				}
 				editor.commit();
-				
-				Toast.makeText(MessageTipsActivity.this, "设置成功", Toast.LENGTH_SHORT).show();
+
 				finish();
 			}
 		});

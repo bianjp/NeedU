@@ -204,20 +204,17 @@ public class NeedDetailActivity extends Activity {
 			resultStatus = json.getInt("status");
 			switch (resultStatus) {
 			case 0:
-				getComment();
-				
 				help.status = true;
 				JSONObject helpJson = json.getJSONObject("help");
 				
 				help.createdBy = helpJson.getString("createdBy");
-				help.name = getUsername(help.createdBy);
-				String photoUrl = getPhotoUrl(help.createdBy);
-				if (!photoUrl.equals("")) {
-					help.headpic = getPhoto(photoUrl);
+				User user = getUser(help.createdBy);
+				help.name = user.name;
+				if (!user.photoUrl.equals("")) {
+					help.headpic = getPhoto(user.photoUrl);
 				}
 				String createdAt = helpJson.getString("createdAt");
 				help.time = convertDate(createdAt);
-				
 				help.title = helpJson.getString("title");
 				help.content = helpJson.getString("content");
 				JSONArray tagsArray = helpJson.getJSONArray("tags");
@@ -226,8 +223,10 @@ public class NeedDetailActivity extends Activity {
 					tags = tags + ';' + tagsArray.optString(i);
 				}
 				help.tags = tags;
-				
 				help.commentCount = helpJson.getInt("commentCount");
+				if (help.commentCount > 0) {
+					getComment();
+				}
 				break;
 
 			default:
@@ -238,19 +237,19 @@ public class NeedDetailActivity extends Activity {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-		
 		return help;
 	}
 	
-	private String handleUserJSON(JSONObject json) {
+	private User handleUserJSON(JSONObject json) {
 		int resultStatus = -3;
-		String username = "";
+		User user = new User();
 		try {
 			resultStatus = json.getInt("status");
 			switch (resultStatus) {
 			case 0:
 				JSONObject profile = json.getJSONObject("profile");
-				username = profile.getString("name");
+				user.name = profile.getString("name");
+				user.photoUrl = profile.getString("photo");
 				break;
 
 			default:
@@ -260,28 +259,7 @@ public class NeedDetailActivity extends Activity {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-		return username;
-	}
-	
-	private String handleUserJSONForPhoto(JSONObject json) {
-		int resultStatus = -3;
-		String photo = "";
-		try {
-			resultStatus = json.getInt("status");
-			switch (resultStatus) {
-			case 0:
-				JSONObject profile = json.getJSONObject("profile");
-				photo = profile.getString("photo");
-				break;
-
-			default:
-				// TODO
-				break;
-			}
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
-		return photo;
+		return user;
 	}
 	
 	private ArrayList<HashMap<String, Object>> handleCommentJSON(JSONObject json) {
@@ -300,10 +278,10 @@ public class NeedDetailActivity extends Activity {
 					
 					String createdBy = commentJson.getString("createdBy");
 					comment.put("createdBy", createdBy);
-					comment.put("name", getUsername(createdBy));
-					String photoUrl = getPhotoUrl(createdBy);
-					if (!photoUrl.equals("null")) {
-						comment.put("image", getPhoto(photoUrl));
+					User user = getUser(createdBy);
+					comment.put("name", user.name);
+					if (!user.photoUrl.equals("null")) {
+						comment.put("image", getPhoto(user.photoUrl));
 					} else {
 						comment.put("image", R.drawable.ic_launcher);
 					}
@@ -437,32 +415,18 @@ public class NeedDetailActivity extends Activity {
 		});
 	}
 	
-	private String getUsername(String id) {
-		String username = null;
+	private User getUser(String id) {
+		User user = new User();
 		try {
 			String tmpUrl = getUserUrl + id + "?sid=" + sessionId;
 			Log.e("alen", tmpUrl);
 			Network network = new Network();
 			JSONObject userJson = network.get(tmpUrl);
-			username = handleUserJSON(userJson);
+			user = handleUserJSON(userJson);
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-		return username;
-	}
-	
-	private String getPhotoUrl(String id) {
-		String photo = null;
-		try {
-			String tmpUrl = getUserUrl + id + "?sid=" + sessionId;
-			Log.e("alen", tmpUrl);
-			Network network = new Network();
-			JSONObject userJson = network.get(tmpUrl);
-			photo = handleUserJSONForPhoto(userJson);
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
-		return photo;
+		return user;
 	}
 	
 	private Bitmap getPhoto(String photoUrl) {
@@ -529,5 +493,10 @@ public class NeedDetailActivity extends Activity {
 		public String content;
 		public String tags;
 		public int commentCount;
+	}
+	
+	private class User {
+		public String name;
+		public String photoUrl;
 	}
 }

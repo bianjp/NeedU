@@ -90,9 +90,9 @@ public class ChangePasswordActivity extends Activity {
 				SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
 				String sessionId = cookies.getString("sessionId", "");
 				
-				serverUrl = serverUrl + "?sid=" + sessionId;
+				String tmpServerUrl = serverUrl + "?sid=" + sessionId;
 				Network network = new Network();
-				JSONObject json = network.put(serverUrl, params);
+				JSONObject json = network.put(tmpServerUrl, params);
 				sendMessage(Network.MSG_OK, json);
 			}
 		}).start();

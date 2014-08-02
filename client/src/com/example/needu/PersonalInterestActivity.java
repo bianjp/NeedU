@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.os.Bundle;
@@ -27,6 +26,7 @@ import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.SimpleAdapter.ViewBinder;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -62,7 +62,6 @@ public class PersonalInterestActivity extends Activity {
 		SharedPreferences cookies = getSharedPreferences("cookies", MODE_PRIVATE);
 		sessionId = cookies.getString("sessionId", "");
 		photoUrl = cookies.getString("photo", "");
-		
 		name = cookies.getString("name", "");
 		college = cookies.getString("school", "");
 		
@@ -123,7 +122,8 @@ public class PersonalInterestActivity extends Activity {
 				Log.e("alen", serverUrl);
 				Network network = new Network();
 				JSONObject json = network.get(serverUrl);
-				sendMessage(MSG_GET_CONCERN, json);
+				ArrayList<HashMap<String, Object>> userList = handleConcernJSON(json);
+				sendMessage(MSG_GET_CONCERN, userList);
 			}
 		}).start();
 	}
@@ -169,8 +169,8 @@ public class PersonalInterestActivity extends Activity {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 			case MSG_GET_CONCERN:
-				JSONObject json = (JSONObject)msg.obj;
-				handleGetResult(json);
+				ArrayList<HashMap<String, Object>> userList = (ArrayList<HashMap<String, Object>>)msg.obj;
+				updateConcernUI(userList);
 				break;
 				
 			case MSG_GET_PHOTO:
@@ -189,22 +189,117 @@ public class PersonalInterestActivity extends Activity {
 		}
 	};
 	
-	private void handleGetResult(JSONObject json) {
+	private ArrayList<HashMap<String, Object>> handleConcernJSON(JSONObject json) {
 		int resultStatus = -3;
+		ArrayList<HashMap<String, Object>> userList = new ArrayList<HashMap<String,Object>>();
 		try {
 			resultStatus = json.getInt("status");
 			switch (resultStatus) {
 			case 0:
-				onGetSuccess(json);
+				JSONArray userArray = json.getJSONArray("users");
+				for (int i = 0; i < userArray.length(); i++) {
+					JSONObject profileJson = userArray.optJSONObject(i);
+					HashMap<String, Object> user = new HashMap<String, Object>();
+					
+					user.put("id", profileJson.getString("_id"));
+					user.put("nickname", profileJson.getString("name"));
+					String photoUrl = profileJson.getString("photo");
+					if (!photoUrl.equals("null")) {
+						user.put("image", getPhotoByUrl(photoUrl));
+					} else {
+						user.put("image", R.drawable.ic_launcher);
+					}
+					userList.add(user);
+				}
 				break;
 
 			default:
-				Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
+				// TODO
 				break;
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
+		return userList;
+	}
+	
+	private Bitmap getPhotoByUrl(String photoUrl) {
+		Bitmap bitmap = null;
+		if (!photoUrl.equals("")) {
+			try {
+				URL url = new URL(Network.HOST + photoUrl);
+				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+				conn.setDoInput(true); 
+			    conn.connect(); 
+			    InputStream is = conn.getInputStream(); 
+			    bitmap = BitmapFactory.decodeStream(is); 
+			    is.close();
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+		}
+		return bitmap;
+	}
+	
+	private void updateConcernUI(final ArrayList<HashMap<String, Object>> userList) {
+		if (userList.isEmpty()) {
+			userListView.setAdapter(null);
+			Toast.makeText(this, "你还未关注其他用户", Toast.LENGTH_SHORT).show();
+			return ;
+		}
+		SimpleAdapter adapter = new SimpleAdapter(this, userList, R.layout.user,
+				new String[]{"nickname", "image"}, new int[]{R.id.nickname, R.id.portrait});
+		adapter.setViewBinder(new ViewBinder() {
+            public boolean setViewValue(View view, Object data, String textRepresentation) {
+                if (view instanceof ImageView && data instanceof Bitmap) {
+                    ImageView image = (ImageView) view;
+                    image.setImageBitmap((Bitmap) data);
+                    return true;
+                }
+                return false;
+            }
+        });
+		userListView.setAdapter(adapter);
+		userListView.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+				String userId = (String) userList.get(position).get("id");
+				Intent intent = new Intent(PersonalInterestActivity.this, OtherPersonActivity.class);
+				intent.putExtra("userId", userId);
+				startActivity(intent);
+			}
+		});
+		userListView.setOnItemLongClickListener(new OnItemLongClickListener() {
+
+			@Override
+			public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+				Dialog dialog = new AlertDialog.Builder(PersonalInterestActivity.this)
+					.setMessage("取消关注该用户？")
+					.setPositiveButton("确定",
+						new DialogInterface.OnClickListener() {
+							
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								String userId = (String) userList.get(position).get("id");
+								deleteOwnConcern(userId);
+								
+								dialog.dismiss();
+							}
+						})
+					.setNegativeButton("取消",
+						new DialogInterface.OnClickListener() {
+							
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								dialog.dismiss();
+							}
+						})
+					.create();
+				dialog.show();
+				return false;
+			}
+		});
 	}
 	
 	private void handleDeleteResult(JSONObject json) {
@@ -220,82 +315,6 @@ public class PersonalInterestActivity extends Activity {
 				Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
 				break;
 			}
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
-	}
-	
-	private void onGetSuccess(JSONObject json) {
-		try {
-			final JSONArray userArray = json.getJSONArray("users");
-			if (userArray.length() == 0) {
-				userListView.setAdapter(null);
-				Toast.makeText(this, "你还未关注其他用户", Toast.LENGTH_SHORT).show();
-				return ;
-			}
-			ArrayList<HashMap<String, Object>> userList = new ArrayList<HashMap<String, Object>>();
-			for (int i = 0; i < userArray.length(); i++) {
-				JSONObject profileJson = userArray.optJSONObject(i);
-				HashMap<String, Object> user = new HashMap<String, Object>();
-				
-				String nickname = profileJson.getString("name");
-				user.put("nickname", nickname);
-				userList.add(user);
-			}
-			SimpleAdapter adapter = new SimpleAdapter(this, userList, R.layout.user,
-					new String[]{"nickname"}, new int[]{R.id.nickname});
-			userListView.setAdapter(adapter);
-			userListView.setOnItemClickListener(new OnItemClickListener() {
-
-				@Override
-				public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-					JSONObject userJson = userArray.optJSONObject(position);
-					try {
-						String userId = userJson.getString("_id");
-						Intent intent = new Intent(PersonalInterestActivity.this, OtherPersonActivity.class);
-						intent.putExtra("userId", userId);
-						startActivity(intent);
-					} catch (JSONException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			});
-			userListView.setOnItemLongClickListener(new OnItemLongClickListener() {
-
-				@Override
-				public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
-					Dialog dialog = new AlertDialog.Builder(PersonalInterestActivity.this)
-						.setMessage("取消关注该用户？")
-						.setPositiveButton("确定",
-							new DialogInterface.OnClickListener() {
-								
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									JSONObject userJson = userArray.optJSONObject(position);
-									try {
-										String userId = userJson.getString("_id");
-										deleteOwnConcern(userId);
-									} catch (JSONException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-									}
-									dialog.dismiss();
-								}
-							})
-						.setNegativeButton("取消",
-							new DialogInterface.OnClickListener() {
-								
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									dialog.dismiss();
-								}
-							})
-						.create();
-					dialog.show();
-					return false;
-				}
-			});
 		} catch (Exception e) {
 			// TODO: handle exception
 		}

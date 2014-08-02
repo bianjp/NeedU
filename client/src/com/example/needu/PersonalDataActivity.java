@@ -115,10 +115,10 @@ public class PersonalDataActivity extends Activity {
 				String sessionId = cookies.getString("sessionId", "");
 				String studentId = cookies.getString("studentId", "");
 				
-				serverUrl = serverUrl + studentId + "?sid=" + sessionId;
-				Log.e("alen", serverUrl);
+				String tmpUrl = serverUrl + studentId + "?sid=" + sessionId;
+				Log.e("alen", tmpUrl);
 				Network network = new Network();
-				JSONObject json = network.get(serverUrl);
+				JSONObject json = network.get(tmpUrl);
 				sendMessage(Network.MSG_OK, json);
 			}
 		}).start();

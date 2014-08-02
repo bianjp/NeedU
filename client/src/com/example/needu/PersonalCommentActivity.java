@@ -110,9 +110,9 @@ public class PersonalCommentActivity extends Activity {
 			
 			@Override
 			public void run() {
-				serverUrl = serverUrl + "?sid=" + sessionId;
+				String tmpUrl = serverUrl + "?sid=" + sessionId;
 				Network network = new Network();
-				JSONObject json = network.get(serverUrl);
+				JSONObject json = network.get(tmpUrl);
 				sendMessage(Network.MSG_OK, json);
 			}
 		}).start();

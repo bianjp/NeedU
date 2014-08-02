@@ -308,7 +308,9 @@ public class GroundActivity extends Activity {
 					notificationManager.notify(i, notification);
 				}
 			}
-			deleteAllNotifications();
+			if (noteArray.length() > 0) {
+				deleteAllNotifications();
+			}
 		} catch (Exception e) {
 			// TODO: handle exception
 			Log.e("alen", e.toString());
